@@ -1,0 +1,140 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Label {
+  id      String   @id @default(cuid())
+  name    String
+  options Option[]
+}
+
+model Option {
+  id      String @id @default(cuid())
+  name    String
+  label   Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
+  labelId String
+
+  relationsFrom OptionRelation[] @relation("OptionRelations")
+  relationsTo   OptionRelation[] @relation("RelatedOptionRelations")
+
+  // Add these new back-relations:
+  asBureau              Activity[] @relation("ActivityBureau")
+  asProject             Activity[] @relation("ActivityProject")
+  asDistrict            Activity[] @relation("ActivityDistrict")
+  asMunicipality        Activity[] @relation("ActivityMunicipality")
+  asRequestingAgency    Activity[] @relation("ActivityRequestingAgency")
+  asModeOfImplementation Activity[] @relation("ActivityMode")
+  asStatus              Activity[] @relation("ActivityStatus")
+  asTargetSector        ActivityTargetSector[] @relation("ActivityTargetSectorOption")
+  asResponsiblePerson   ActivityResponsiblePerson[] @relation("ActivityResponsiblePersonOption")
+  asTarget Target[] @relation("TargetBureau")
+  asTargetProject Target[] @relation("TargetProject")
+  asSupplyCategory Supply[] @relation("SupplyCategory")
+}
+
+model OptionRelation {
+  id String @id @default(cuid())
+
+  option          Option @relation("OptionRelations", fields: [optionId], references: [id], onDelete: Cascade)
+  optionId        String
+  relatedOption   Option @relation("RelatedOptionRelations", fields: [relatedOptionId], references: [id], onDelete: Cascade)
+  relatedOptionId String
+}
+
+model Activity {
+  id              String   @id @default(cuid())
+  activityName    String
+  activityVenue   String?
+  indicator       String?
+  barangay        String?
+  dateFrom        DateTime?
+  dateTo          DateTime?
+  femaleCount     Int      @default(0)
+  maleCount       Int      @default(0)
+  totalCount      Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  bureau              Option? @relation("ActivityBureau", fields: [bureauOptionId], references: [id])
+  bureauOptionId      String?
+
+  project             Option? @relation("ActivityProject", fields: [projectOptionId], references: [id])
+  projectOptionId     String?
+
+  district            Option? @relation("ActivityDistrict", fields: [districtOptionId], references: [id])
+  districtOptionId    String?
+
+  municipality        Option? @relation("ActivityMunicipality", fields: [municipalityOptionId], references: [id])
+  municipalityOptionId String?
+
+  requestingAgency    Option? @relation("ActivityRequestingAgency", fields: [requestingAgencyId], references: [id])
+  requestingAgencyId  String?
+
+  modeOfImplementation Option? @relation("ActivityMode", fields: [modeOfImplementationId], references: [id])
+  modeOfImplementationId String?
+
+  status              Option? @relation("ActivityStatus", fields: [statusId], references: [id])
+  statusId            String?
+
+  targetSectors       ActivityTargetSector[]
+  responsiblePersons  ActivityResponsiblePerson[]
+}
+
+model ActivityTargetSector {
+  id         String   @id @default(cuid())
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  activityId String
+  option     Option   @relation("ActivityTargetSectorOption", fields: [optionId], references: [id])
+  optionId   String
+}
+
+model ActivityResponsiblePerson {
+  id         String   @id @default(cuid())
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  activityId String
+  option     Option   @relation("ActivityResponsiblePersonOption", fields: [optionId], references: [id])
+  optionId   String
+}
+
+model Target {
+  id              String  @id @default(cuid())
+  name            String
+  value           Int
+  semester        String
+  bureau          Option  @relation("TargetBureau", fields: [bureauOptionId], references: [id])
+  bureauOptionId  String
+  project         Option? @relation("TargetProject", fields: [projectOptionId], references: [id])
+  projectOptionId String?
+  createdAt       DateTime @default(now())
+}
+
+model Supply {
+  id               String    @id @default(cuid())
+  name             String
+  size             String?
+  category         Option?   @relation("SupplyCategory", fields: [categoryOptionId], references: [id])
+  categoryOptionId String?
+  stockQuantity    Int       @default(0)
+  stockInDate      DateTime?
+  createdAt        DateTime  @default(now())
+  releases ReleasedSupply[]
+}
+
+model ReleasedSupply {
+  id               String   @id @default(cuid())
+  supply           Supply   @relation(fields: [supplyId], references: [id], onDelete: Cascade)
+  supplyId         String
+  releasedQuantity Int
+  releasedDate     DateTime @default(now())
+  requesteeName    String
+  createdAt        DateTime @default(now())
+}

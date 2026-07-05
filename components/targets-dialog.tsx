@@ -1,53 +1,77 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Field, FieldGroup } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Plus, Target, X } from 'lucide-react';
-import { useState } from 'react';
+} from "@/components/ui/dialog";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Plus, Target } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from './ui/select';
+} from "./ui/select";
+import { getLabels } from "@/app/actions/label-action";
+import { getOptionsForLabel } from "@/lib/label-utils";
+import { getRelatedOptions } from "@/app/actions/option-actions";
+import type { Label as LabelType, OptionSummary } from "@/lib/types";
+import { addTargets } from "@/app/actions/target-actions";
+import { toast } from "sonner";
 
 interface TargetField {
   id: string;
   name: string;
-  value: number | string;
+  value: string;
   semester: string;
+  bureau: string;
+  project: string;
 }
 
 export function TargetsDialog() {
+  const [open, setOpen] = useState(false);
+  const [labels, setLabels] = useState<LabelType[]>([]);
   const [targets, setTargets] = useState<TargetField[]>([]);
+  const [projectOptionsByTarget, setProjectOptionsByTarget] = useState<
+    Record<string, OptionSummary[]>
+  >({});
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (open) {
+      getLabels().then(setLabels);
+    }
+  }, [open]);
+
+  const bureauOptions = getOptionsForLabel(labels, "bureau");
 
   const addTarget = () => {
-    setTargets((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), name: '', value: '', semester: '' },
+    if (targets.length > 0) return; // only one target allowed
+    setTargets([
+      {
+        id: crypto.randomUUID(),
+        name: "",
+        value: "",
+        semester: "",
+        bureau: "",
+        project: "",
+      },
     ]);
-  };
-
-  const removeTarget = (id: string) => {
-    setTargets((prev) => prev.filter((target) => target.id !== id));
   };
 
   const updateTarget = (
     id: string,
-    key: 'name' | 'value' | 'semester',
+    key: "name" | "value" | "semester" | "bureau" | "project",
     newValue: string,
   ) => {
     setTargets((prev) =>
@@ -55,101 +79,220 @@ export function TargetsDialog() {
     );
   };
 
+  const handleBureauChange = (targetId: string, bureauOptionId: string) => {
+    updateTarget(targetId, "bureau", bureauOptionId);
+    updateTarget(targetId, "project", ""); // reset dependent project select
+
+    if (!bureauOptionId) {
+      setProjectOptionsByTarget((prev) => ({ ...prev, [targetId]: [] }));
+      return;
+    }
+
+    getRelatedOptions(bureauOptionId).then((related) => {
+      setProjectOptionsByTarget((prev) => ({ ...prev, [targetId]: related }));
+    });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (targets.length === 0) {
+      toast.error("Add a target");
+      return;
+    }
+
+    startTransition(async () => {
+      const result = await addTargets(
+        targets.map((t) => ({
+          name: t.name,
+          value: Number(t.value) || 0,
+          semester: t.semester,
+          bureauOptionId: t.bureau,
+          projectOptionId: t.project || undefined,
+        })),
+      );
+
+      if (result.success) {
+        toast.success("Targets saved");
+        setTargets([]);
+        setProjectOptionsByTarget({});
+        setOpen(false);
+      } else {
+        toast.error(result.error ?? "Something went wrong");
+      }
+    });
+  };
+
   return (
-    <Dialog>
-      <form>
-        <DialogTrigger asChild>
-          <Button>
-            <Target className='h-4 w-4' /> Targets
-          </Button>
-        </DialogTrigger>
-        <DialogContent className='sm:max-w-lg'>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <Target className="h-4 w-4" /> Targets
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-2xl">
+        <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Add Targets</DialogTitle>
             <DialogDescription>
-              Add targets for the project metrics. You can add multiple
+              Add a target for the project analytics.
             </DialogDescription>
           </DialogHeader>
-          <div>
+
+          <div className="py-4">
             <Button
-              type='button'
-              variant='outline'
-              size='sm'
+              type="button"
+              variant="outline"
+              size="sm"
               onClick={addTarget}
+              disabled={targets.length > 0}
             >
-              <Plus className='size-4' />
+              <Plus className="size-4" />
               Add Target
             </Button>
           </div>
+
           {targets.length > 0 && (
-            <div className='flex flex-col gap-3'>
-              {targets.map((target, index) => (
-                <div key={target.id} className='flex items-end gap-2'>
-                  <Field className='flex-1'>
-                    <Label htmlFor={`target-name-${target.id}`}>
-                      Indicator
-                    </Label>
-                    <Input
-                      id={`target-name-${target.id}`}
-                      type='text'
-                      placeholder='e.g. Activity'
-                      value={target.name}
-                      onChange={(e) =>
-                        updateTarget(target.id, 'name', e.target.value)
-                      }
-                    />
-                  </Field>
-                  <Field className='flex-1'>
-                    <Label htmlFor={`target-value-${target.id}`}>Target</Label>
-                    <Input
-                      id={`target-value-${target.id}`}
-                      type='number'
-                      placeholder='0'
-                      value={target.value}
-                      onChange={(e) =>
-                        updateTarget(target.id, 'value', e.target.value)
-                      }
-                    />
-                  </Field>
-                  <Field className='flex-1'>
-                    <Label htmlFor={`target-semester-${target.id}`}>
-                      Semester
-                    </Label>
-                    <Select
-                      value={target.semester}
-                      onValueChange={(value) =>
-                        updateTarget(target.id, 'semester', value)
-                      }
-                    >
-                      <SelectTrigger id={`target-semester-${target.id}`}>
-                        <SelectValue placeholder='Select' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='1st'>1st Semester</SelectItem>
-                        <SelectItem value='2nd'>2nd Semester</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                  <Button
-                    type='button'
-                    variant='ghost'
-                    size='icon'
-                    onClick={() => removeTarget(target.id)}
-                  >
-                    <X className='size-4' />
-                  </Button>
-                </div>
-              ))}
+            <div className="flex flex-col gap-3">
+              {targets.map((target) => {
+                const projectOptions = projectOptionsByTarget[target.id] ?? [];
+
+                return (
+                  <div key={target.id} className="flex flex-col gap-3">
+                    <Field>
+                      <Label htmlFor={`target-name-${target.id}`}>
+                        Indicator
+                      </Label>
+                      <Input
+                        id={`target-name-${target.id}`}
+                        type="text"
+                        placeholder="e.g. Activity"
+                        value={target.name}
+                        onChange={(e) =>
+                          updateTarget(target.id, "name", e.target.value)
+                        }
+                      />
+                    </Field>
+
+                    <div className="grid grid-cols-4 gap-2 items-end">
+                      <Field>
+                        <Label htmlFor={`target-value-${target.id}`}>
+                          Target
+                        </Label>
+                        <Input
+                          id={`target-value-${target.id}`}
+                          type="number"
+                          placeholder="0"
+                          value={target.value}
+                          onChange={(e) =>
+                            updateTarget(target.id, "value", e.target.value)
+                          }
+                        />
+                      </Field>
+
+                      <Field>
+                        <Label htmlFor={`target-semester-${target.id}`}>
+                          Semester
+                        </Label>
+                        <Select
+                          value={target.semester}
+                          onValueChange={(value) =>
+                            updateTarget(target.id, "semester", value)
+                          }
+                        >
+                          <SelectTrigger id={`target-semester-${target.id}`}>
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1st">1st Semester</SelectItem>
+                            <SelectItem value="2nd">2nd Semester</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </Field>
+
+                      <Field>
+                        <Label htmlFor={`target-bureau-${target.id}`}>
+                          Bureau
+                        </Label>
+                        <Select
+                          value={target.bureau}
+                          onValueChange={(value) =>
+                            handleBureauChange(target.id, value)
+                          }
+                        >
+                          <SelectTrigger id={`target-bureau-${target.id}`}>
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {bureauOptions.length === 0 ? (
+                              <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                                No bureaus available
+                              </div>
+                            ) : (
+                              bureauOptions.map((option) => (
+                                <SelectItem key={option.id} value={option.id}>
+                                  {option.name}
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </Field>
+
+                      <Field>
+                        <Label htmlFor={`target-project-${target.id}`}>
+                          Project
+                        </Label>
+                        <Select
+                          value={target.project}
+                          onValueChange={(value) =>
+                            updateTarget(target.id, "project", value)
+                          }
+                          disabled={!target.bureau}
+                        >
+                          <SelectTrigger id={`target-project-${target.id}`}>
+                            <SelectValue
+                              placeholder={
+                                target.bureau ? "Select" : "Select bureau first"
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {projectOptions.length === 0 ? (
+                              <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                                No related projects
+                              </div>
+                            ) : (
+                              projectOptions.map((option) => (
+                                <SelectItem key={option.id} value={option.id}>
+                                  {option.name}
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </Field>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant='outline'>Cancel</Button>
-            </DialogClose>
-            <Button type='submit'>Save changes</Button>
+
+          <DialogFooter className="mt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? "Saving..." : "Save changes"}
+            </Button>
           </DialogFooter>
-        </DialogContent>
-      </form>
+        </form>
+      </DialogContent>
     </Dialog>
   );
 }

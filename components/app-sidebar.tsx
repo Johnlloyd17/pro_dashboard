@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import * as React from 'react';
+import * as React from "react";
 
-import { NavMain } from '@/components/nav-main';
-import { NavProjects } from '@/components/nav-projects';
-import { NavUser } from '@/components/nav-user';
-import { TeamSwitcher } from '@/components/team-switcher';
+import { NavMain } from "@/components/nav-main";
+import { NavProjects } from "@/components/nav-projects";
+import { NavUser } from "@/components/nav-user";
+import { TeamSwitcher } from "@/components/team-switcher";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from '@/components/ui/sidebar';
+} from "@/components/ui/sidebar";
 import {
   GalleryVerticalEndIcon,
   AudioLinesIcon,
@@ -24,141 +24,120 @@ import {
   FrameIcon,
   PieChartIcon,
   MapIcon,
-} from 'lucide-react';
+  Box,
+  ScanBarcode,
+  Logs,
+} from "lucide-react";
 
 // This is sample data.
 const data = {
   user: {
-    name: 'shadcn',
-    email: 'm@example.com',
-    avatar: '/avatars/shadcn.jpg',
+    name: "shadcn",
+    email: "m@example.com",
+    avatar: "/avatars/shadcn.jpg",
   },
   teams: [
     {
-      name: 'Acme Inc',
+      name: "Acme Inc",
       logo: <GalleryVerticalEndIcon />,
-      plan: 'Enterprise',
+      plan: "Enterprise",
     },
     {
-      name: 'Acme Corp.',
+      name: "Acme Corp.",
       logo: <AudioLinesIcon />,
-      plan: 'Startup',
+      plan: "Startup",
     },
     {
-      name: 'Evil Corp.',
+      name: "Evil Corp.",
       logo: <TerminalIcon />,
-      plan: 'Free',
+      plan: "Free",
     },
   ],
   navMain: [
     {
-      title: 'Playground',
-      url: '#',
+      title: "Bureaus",
+      url: "#",
       icon: <TerminalSquareIcon />,
       isActive: true,
       items: [
         {
-          title: 'Cybersecurity',
-          url: '/cybersecurity',
+          title: "Cybersecurity",
+          url: "/cybersecurity",
         },
         {
-          title: 'Starred',
-          url: '#',
+          title: "ILCDB",
+          url: "/ilcdb",
         },
         {
-          title: 'Settings',
-          url: '#',
+          title: "FW4A",
+          url: "#",
         },
       ],
     },
     {
-      title: 'Models',
-      url: '#',
-      icon: <BotIcon />,
+      title: "Inventory",
+      url: "#",
+      icon: <Box />,
       items: [
         {
-          title: 'Genesis',
-          url: '#',
+          title: "Supply Monitoring",
+          url: "/supply-monitoring",
         },
         {
-          title: 'Explorer',
-          url: '#',
-        },
-        {
-          title: 'Quantum',
-          url: '#',
+          title: "Equipment Monitoring",
+          url: "#",
         },
       ],
     },
     {
-      title: 'Documentation',
-      url: '#',
+      title: "Documents",
+      url: "#",
       icon: <BookOpenIcon />,
       items: [
         {
-          title: 'Introduction',
-          url: '#',
+          title: "Letter Monitoring",
+          url: "/letter-monitoring",
         },
         {
-          title: 'Get Started',
-          url: '#',
-        },
-        {
-          title: 'Tutorials',
-          url: '#',
-        },
-        {
-          title: 'Changelog',
-          url: '#',
+          title: "Bills Monitoring",
+          url: "/bills-monitoring",
         },
       ],
     },
     {
-      title: 'Settings',
-      url: '#',
-      icon: <Settings2Icon />,
+      title: "Procurement",
+      url: "#",
+      icon: <ScanBarcode />,
       items: [
         {
-          title: 'General',
-          url: '#',
-        },
-        {
-          title: 'Team',
-          url: '#',
-        },
-        {
-          title: 'Billing',
-          url: '#',
-        },
-        {
-          title: 'Limits',
-          url: '#',
+          title: "General",
+          url: "#",
         },
       ],
     },
   ],
   projects: [
     {
-      name: 'Design Engineering',
-      url: '#',
+      name: "OJT Monitoring",
+      url: "#",
       icon: <FrameIcon />,
     },
     {
-      name: 'Sales & Marketing',
-      url: '#',
+      name: "Virtual Attendance Log",
+      url: "#",
       icon: <PieChartIcon />,
     },
     {
-      name: 'Travel',
-      url: '#',
-      icon: <MapIcon />,
+      name: "Logs",
+      url: "#",
+      icon: <Logs />,
     },
   ],
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar collapsible='icon' {...props}>
+    <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>

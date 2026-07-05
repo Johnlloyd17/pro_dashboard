@@ -1,89 +1,141 @@
-'use client';
-import { DataTableProjects } from '@/components/data-table-projects';
-import FilterTerm from '@/components/filter-term';
-import { TargetsDialog } from '@/components/targets-dialog';
-import { Button } from '@/components/ui/button';
+import {
+  getActivityStats,
+  getCompletedActivitiesByMunicipality,
+  getGenderDemographics,
+  getModeOfImplementationBreakdown,
+  getOverallTargetAchievementRate,
+  getTargetAccomplishments,
+} from "@/app/actions/activity-actions";
+import { ChartDemographics } from "@/components/chart-demographics";
+import { ChartModeOfImplementation } from "@/components/chart-mode-implementation";
+import { CompletedActivitiesChart } from "@/components/completed-activities-chart";
+import { DataTableProjects } from "@/components/data-table-projects";
+import FilterTerm from "@/components/filter-term";
+import { TargetChartCard } from "@/components/target-chart-card";
+import { TargetsDialog } from "@/components/targets-dialog";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FilterIcon, Plus } from 'lucide-react';
-import React from 'react';
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ViewTargets from "@/components/view-targets";
 
-interface CybersecurityMetric {
-  id: string;
-  title: string;
-  description: string;
-}
+export default async function CybersecurityPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const params = await searchParams;
+  const stats = await getActivityStats("Cybersecurity");
+  const achievementRate =
+    await getOverallTargetAchievementRate("Cybersecurity");
 
-const cybersecurityData: CybersecurityMetric[] = [
-  {
-    id: 'threats-detected',
-    title: 'Threats Detected',
-    description: '128 threats identified and neutralized this month.',
-  },
-  {
-    id: 'active-incidents',
-    title: 'Active Incidents',
-    description: '3 incidents currently under investigation.',
-  },
-  {
-    id: 'vulnerability-score',
-    title: 'Vulnerability Score',
-    description: 'System risk rated 7.2/10, down from last quarter.',
-  },
-  {
-    id: 'patch-compliance',
-    title: 'Patch Compliance',
-    description: '94% of systems are running the latest security patches.',
-  },
-];
+  const cybersecurityData = [
+    {
+      id: "completed-activities",
+      title: "Completed Activities",
+      value: stats.completedCount,
+      description: "Activities completed to date.",
+    },
+    {
+      id: "upcoming-activities",
+      title: "Upcoming Activities",
+      value: stats.upcomingCount,
+      description: "Activities scheduled ahead.",
+    },
+    {
+      id: "total-participants",
+      title: "Total Participants",
+      value: stats.totalParticipants,
+      description: "Participants reached so far.",
+    },
+    {
+      id: "achievement-rate",
+      title: "Target Achievement Rate",
+      value: achievementRate !== null ? `${achievementRate}%` : "—",
+      description:
+        achievementRate !== null
+          ? "Average progress across all set targets."
+          : "No targets set yet.",
+    },
+  ];
 
-export default function CybersecurityPage() {
-  const [position, setPosition] = React.useState('bottom');
+  const municipalityData =
+    await getCompletedActivitiesByMunicipality("Cybersecurity");
+  const genderData = await getGenderDemographics("Cybersecurity");
+  const modeData = await getModeOfImplementationBreakdown("Cybersecurity");
+  const targetData = await getTargetAccomplishments("Cybersecurity");
+
   return (
-    <main className='flex flex-col gap-4'>
-      <div className='flex flex-row justify-between items-end'>
+    <main className="flex flex-col gap-4">
+      <div className="flex flex-row justify-between items-end">
         <div>
-          <CardTitle className='text-xl'>Cybersecurity Metrics</CardTitle>
-          <CardDescription className='text-sm text-muted-foreground'>
+          <CardTitle className="text-xl">Cybersecurity Metrics</CardTitle>
+          <CardDescription>
             Monitor your organization's cybersecurity performance and
             compliance.
           </CardDescription>
         </div>
-        <div className='flex flex-row gap-2'>
+        <div className="flex flex-row gap-2">
+          <ViewTargets bureauName="Cybersecurity" />
           <TargetsDialog />
           <FilterTerm />
         </div>
       </div>
-      <div className='grid grid-cols-4 gap-4'>
+      <div className="grid grid-cols-4 gap-4">
         {cybersecurityData.map((item) => (
-          <Card key={item.id} className='col-span-1'>
+          <Card key={item.id} className="col-span-1">
             <CardHeader>
               <CardTitle>{item.title}</CardTitle>
             </CardHeader>
             <CardContent>
+              <CardTitle className="text-3xl">{item.value}</CardTitle>
               <p>{item.description}</p>
             </CardContent>
           </Card>
         ))}
       </div>
-      <Tabs defaultValue='overview' className='w-full col-span-4'>
-        <TabsList className='flex flex-row gap-2'>
-          <TabsTrigger value='overview'>Overview</TabsTrigger>
-          <TabsTrigger value='map'>Map</TabsTrigger>
-          <TabsTrigger value='analytics'>Analytics</TabsTrigger>
+      <Tabs defaultValue="overview" className="w-full col-span-4">
+        <TabsList className="flex flex-row gap-2">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="map">Map</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
-        <TabsContent value='overview'>
-          <DataTableProjects />
+        <TabsContent value="overview">
+          <DataTableProjects bureauName="Cybersecurity" searchParams={params} />
         </TabsContent>
-        <TabsContent value='map'>Map content goes here.</TabsContent>
-        <TabsContent value='analytics'>
-          Analytics content goes here.
+        <TabsContent value="map">Map content goes here.</TabsContent>
+        <TabsContent value="analytics" className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {targetData.length === 0 ? (
+              <p className="text-sm text-muted-foreground col-span-full text-center py-8">
+                No targets set yet for this bureau.
+              </p>
+            ) : (
+              targetData.map((t, index) => (
+                <TargetChartCard
+                  key={index}
+                  indicator={t.indicator}
+                  semester={t.semester}
+                  target={t.target}
+                  accomplished={t.accomplished}
+                  projectName={t.projectName}
+                />
+              ))
+            )}
+          </div>
+          <CompletedActivitiesChart
+            district1={municipalityData.district1}
+            district2={municipalityData.district2}
+          />
+          <div className="grid grid-cols-4 gap-4">
+            <ChartDemographics data={genderData} />
+            <ChartModeOfImplementation data={modeData} />
+          </div>
         </TabsContent>
       </Tabs>
     </main>

@@ -1,4 +1,6 @@
-import React from 'react';
+"use client";
+
+import React from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,9 +11,9 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Button } from './ui/button';
-import { FilterIcon } from 'lucide-react';
+} from "@/components/ui/dropdown-menu";
+import { Button } from "./ui/button";
+import { FilterIcon } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -20,29 +22,29 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 
 export default function FilterTerm() {
-  const [position, setPosition] = React.useState('bottom');
+  const [position, setPosition] = React.useState("bottom");
   return (
     <div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant='outline'>
-            <FilterIcon className='h-4 w-4' />
+          <Button variant="outline">
+            <FilterIcon className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <DropdownMenuGroup>
             <DropdownMenuItem>
               <Select>
-                <SelectTrigger className='w-full max-w-48'>
-                  <SelectValue placeholder='Select a year' />
+                <SelectTrigger className="w-full max-w-48">
+                  <SelectValue placeholder="Select a year" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel>Year</SelectLabel>
-                    <SelectItem value='2026'>2026</SelectItem>
+                    <SelectItem value="2026">2026</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -55,10 +57,10 @@ export default function FilterTerm() {
               value={position}
               onValueChange={setPosition}
             >
-              <DropdownMenuRadioItem value='1st'>
+              <DropdownMenuRadioItem value="1st">
                 1st semester
               </DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value='2nd'>
+              <DropdownMenuRadioItem value="2nd">
                 2nd semester
               </DropdownMenuRadioItem>
             </DropdownMenuRadioGroup>
