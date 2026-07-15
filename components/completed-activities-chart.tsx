@@ -139,8 +139,7 @@ export function CompletedActivitiesChart({
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              angle={0}
-              textAnchor="end"
+              textAnchor="middle"
               height={70}
               interval={0}
             />

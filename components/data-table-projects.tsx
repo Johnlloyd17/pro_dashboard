@@ -13,7 +13,14 @@ import AddDialog from './add-dialog';
 import { Button } from './ui/button';
 import { EllipsisVertical, Import } from 'lucide-react';
 import { Badge } from './ui/badge';
-import { getActivities } from '@/app/actions/activity-actions';
+import {
+  getActivities,
+  getActivityFilterOptions,
+} from '@/app/actions/activity-actions';
+import {
+  FilterableHead,
+  SortableDateHead,
+} from './data-table-header-controls';
 import { format } from 'date-fns';
 import TableActions from './table-actions';
 import { DataTableProjectsProps } from '@/lib/types';
@@ -24,18 +31,24 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { CardDescription } from './ui/card';
+import { ActivityDetailsSheet } from './activity-details-sheet';
 
 export async function DataTableProjects({
   bureauName,
   searchParams,
 }: DataTableProjectsProps) {
   const currentPage = Number(searchParams?.page) || 1;
-  const { activities, totalPages } = await getActivities(
-    bureauName,
-    currentPage,
-    searchParams?.year,
-    searchParams?.semester,
-  );
+  const [{ activities, totalPages }, filterOptions] = await Promise.all([
+    getActivities(bureauName, currentPage, searchParams?.year, searchParams?.semester, {
+      sort: searchParams?.sort,
+      project: searchParams?.project,
+      district: searchParams?.district,
+      mode: searchParams?.mode,
+      status: searchParams?.status,
+      month: searchParams?.month,
+    }),
+    getActivityFilterOptions(bureauName),
+  ]);
 
   return (
     <div className='flex flex-col gap-3 w-full min-w-0'>
@@ -44,20 +57,46 @@ export async function DataTableProjects({
           <TableHeader className='bg-gray-100'>
             <TableRow>
               <TableHead className='w-25'>Activity ID</TableHead>
-              <TableHead>Date Range</TableHead>
+              <TableHead>
+                <SortableDateHead />
+              </TableHead>
               <TableHead>Bureau</TableHead>
-              <TableHead>Project</TableHead>
+              <TableHead>
+                <FilterableHead
+                  label='Project'
+                  param='project'
+                  options={filterOptions.projects}
+                />
+              </TableHead>
               <TableHead>Indicator</TableHead>
               <TableHead>Activity Name</TableHead>
               <TableHead>Activity Venue</TableHead>
-              <TableHead>District</TableHead>
+              <TableHead>
+                <FilterableHead
+                  label='District'
+                  param='district'
+                  options={filterOptions.districts}
+                />
+              </TableHead>
               <TableHead>City/Municipality</TableHead>
               <TableHead>Barangay</TableHead>
               <TableHead>Requesting Agency</TableHead>
-              <TableHead>Mode of Implementation</TableHead>
+              <TableHead>
+                <FilterableHead
+                  label='Mode of Implementation'
+                  param='mode'
+                  options={filterOptions.modes}
+                />
+              </TableHead>
               <TableHead>Target Sector</TableHead>
               <TableHead>Responsible Person</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>
+                <FilterableHead
+                  label='Status'
+                  param='status'
+                  options={filterOptions.statuses}
+                />
+              </TableHead>
               <TableHead>Female</TableHead>
               <TableHead>Male</TableHead>
               <TableHead>Total</TableHead>
@@ -127,7 +166,7 @@ export async function DataTableProjects({
                     )}
                   </TableCell>
                   <TableCell className='w-100'>
-                    {activity.activityName}
+                    <ActivityDetailsSheet activity={activity} />
                   </TableCell>
                   <TableCell>{activity.activityVenue ?? '—'}</TableCell>
                   <TableCell>

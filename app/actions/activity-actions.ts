@@ -76,20 +76,73 @@ export async function getActivities(
   page: number = 1,
   year?: string,
   semester?: string,
+  filters?: {
+    sort?: string;
+    project?: string;
+    district?: string;
+    mode?: string;
+    status?: string;
+    month?: string;
+  },
 ) {
   const dateRange = getDateRangeFilter(year, semester);
+
+  // A month filter narrows to that month within the filtered year
+  // (or the current year when no year filter is active).
+  const monthNum = Number(filters?.month);
+  const monthRange =
+    monthNum >= 1 && monthNum <= 12
+      ? {
+          gte: new Date(Number(year) || new Date().getFullYear(), monthNum - 1, 1),
+          lte: new Date(
+            Number(year) || new Date().getFullYear(),
+            monthNum,
+            0,
+            23,
+            59,
+            59,
+          ),
+        }
+      : undefined;
 
   const where = {
     ...(bureauName
       ? { bureau: { name: { equals: bureauName, mode: 'insensitive' as const } } }
       : {}),
-    ...(dateRange ? { dateFrom: dateRange } : {}),
+    ...(monthRange
+      ? { dateFrom: monthRange }
+      : dateRange
+        ? { dateFrom: dateRange }
+        : {}),
+    ...(filters?.project
+      ? { project: { name: { equals: filters.project, mode: 'insensitive' as const } } }
+      : {}),
+    ...(filters?.district
+      ? { district: { name: { equals: filters.district, mode: 'insensitive' as const } } }
+      : {}),
+    ...(filters?.mode
+      ? {
+          modeOfImplementation: {
+            name: { equals: filters.mode, mode: 'insensitive' as const },
+          },
+        }
+      : {}),
+    ...(filters?.status
+      ? { status: { name: { equals: filters.status, mode: 'insensitive' as const } } }
+      : {}),
   };
+
+  const orderBy =
+    filters?.sort === 'date_asc'
+      ? { dateFrom: 'asc' as const }
+      : filters?.sort === 'date_desc'
+        ? { dateFrom: 'desc' as const }
+        : { createdAt: 'desc' as const };
 
   const [activities, totalCount] = await Promise.all([
     prisma.activity.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy,
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
       include: {
@@ -112,6 +165,30 @@ export async function getActivities(
     activities,
     totalPages: Math.max(1, Math.ceil(totalCount / PAGE_SIZE)),
     currentPage: page,
+  };
+}
+
+export async function getActivityFilterOptions(bureauName?: string) {
+  const activities = await prisma.activity.findMany({
+    where: bureauName
+      ? { bureau: { name: { equals: bureauName, mode: 'insensitive' } } }
+      : {},
+    select: {
+      project: { select: { name: true } },
+      district: { select: { name: true } },
+      modeOfImplementation: { select: { name: true } },
+      status: { select: { name: true } },
+    },
+  });
+
+  const distinct = (values: (string | null | undefined)[]) =>
+    Array.from(new Set(values.filter((v): v is string => Boolean(v)))).sort();
+
+  return {
+    projects: distinct(activities.map((a) => a.project?.name)),
+    districts: distinct(activities.map((a) => a.district?.name)),
+    modes: distinct(activities.map((a) => a.modeOfImplementation?.name)),
+    statuses: distinct(activities.map((a) => a.status?.name)),
   };
 }
 

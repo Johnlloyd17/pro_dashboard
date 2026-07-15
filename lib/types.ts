@@ -33,7 +33,17 @@ export interface TableActionsProps {
 
 export interface DataTableProjectsProps {
   bureauName: string;
-  searchParams?: { page?: string; year?: string; semester?: string };
+  searchParams?: {
+    page?: string;
+    year?: string;
+    semester?: string;
+    sort?: string;
+    project?: string;
+    district?: string;
+    mode?: string;
+    status?: string;
+    month?: string;
+  };
 }
 
 export interface PaginationComponentProps {

@@ -186,7 +186,7 @@ export function TargetsDialog() {
                       />
                     </Field>
 
-                    <div className='grid grid-cols-7 gap-2 items-end'>
+                    <div className='grid grid-cols-4 gap-2 items-end'>
                       <Field>
                         <Label htmlFor={`target-1st-${target.id}`}>
                           1st District
@@ -339,9 +339,9 @@ export function TargetsDialog() {
                           </SelectTrigger>
                           <SelectContent>
                             {projectOptions.length === 0 ? (
-                              <div className='px-2 py-1.5 text-sm text-muted-foreground'>
+                              <SelectItem value=''>
                                 No related projects
-                              </div>
+                              </SelectItem>
                             ) : (
                               projectOptions.map((option) => (
                                 <SelectItem key={option.id} value={option.id}>
