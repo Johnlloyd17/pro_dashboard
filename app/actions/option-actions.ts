@@ -79,6 +79,20 @@ export async function getRelatedOptions(optionId: string) {
   );
 }
 
+export async function updateOption(id: string, name: string) {
+  if (!name.trim()) {
+    return { success: false, error: "Option name is required" };
+  }
+
+  try {
+    await prisma.option.update({ where: { id }, data: { name } });
+    revalidatePath("/");
+    return { success: true };
+  } catch {
+    return { success: false, error: "Failed to update option" };
+  }
+}
+
 export async function deleteOption(id: string) {
   try {
     await prisma.option.delete({ where: { id } });
@@ -86,5 +100,27 @@ export async function deleteOption(id: string) {
     return { success: true };
   } catch {
     return { success: false, error: "Failed to delete option" };
+  }
+}
+
+export async function updateOptionRelations(
+  optionId: string,
+  relatedOptionIds: string[],
+) {
+  try {
+    await prisma.$transaction([
+      prisma.optionRelation.deleteMany({ where: { optionId } }),
+      prisma.optionRelation.createMany({
+        data: relatedOptionIds
+          .filter((id) => id.trim() !== "")
+          .map((relatedOptionId) => ({ optionId, relatedOptionId })),
+      }),
+    ]);
+
+    revalidatePath("/");
+    return { success: true };
+  } catch (error) {
+    console.error("updateOptionRelations error:", error);
+    return { success: false, error: "Failed to update relations" };
   }
 }

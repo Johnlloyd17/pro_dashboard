@@ -29,6 +29,20 @@ export async function getLabels() {
     },
   });
 }
+export async function updateLabel(id: string, name: string) {
+  if (!name.trim()) {
+    return { success: false, error: "Label name is required" };
+  }
+
+  try {
+    await prisma.label.update({ where: { id }, data: { name } });
+    revalidatePath("/");
+    return { success: true };
+  } catch {
+    return { success: false, error: "Failed to update label" };
+  }
+}
+
 export async function deleteLabel(id: string) {
   try {
     await prisma.label.delete({ where: { id } });

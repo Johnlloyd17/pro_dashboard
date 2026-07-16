@@ -33,17 +33,7 @@ export interface TableActionsProps {
 
 export interface DataTableProjectsProps {
   bureauName: string;
-  searchParams?: {
-    page?: string;
-    year?: string;
-    semester?: string;
-    sort?: string;
-    project?: string;
-    district?: string;
-    mode?: string;
-    status?: string;
-    month?: string;
-  };
+  searchParams?: { page?: string; year?: string; semester?: string; stat?: string };
 }
 
 export interface PaginationComponentProps {
@@ -89,3 +79,24 @@ export interface SupplyTableProps {
 
 export type Option = Label["options"][number];
 export type OptionRelation = Option["relationsFrom"][number];
+
+export interface PropertyRecord {
+  id: string;
+  project: string | null;
+  itemNo: string | null;
+  classification: string | null;
+  quantity: number;
+  unit: string | null;
+  descriptionModel: string | null;
+  receivedFrom: string | null;
+  propertyNumber: string | null;
+  icsParNumber: string | null;
+  serialNumber: string | null;
+  dateAcquired: Date | null;
+  accountableOfficer: string | null;
+  unitCost: number;
+  estimatedUsefulLife: string | null;
+  receivedTransferred: string | null;
+  remarks: string | null;
+  createdAt: Date;
+}

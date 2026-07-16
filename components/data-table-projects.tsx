@@ -11,16 +11,9 @@ import {
 import { PaginationComponent } from './pagination';
 import AddDialog from './add-dialog';
 import { Button } from './ui/button';
-import { EllipsisVertical, Import } from 'lucide-react';
+import { EllipsisVertical, Import, Download } from 'lucide-react';
 import { Badge } from './ui/badge';
-import {
-  getActivities,
-  getActivityFilterOptions,
-} from '@/app/actions/activity-actions';
-import {
-  FilterableHead,
-  SortableDateHead,
-} from './data-table-header-controls';
+import { getActivities } from '@/app/actions/activity-actions';
 import { format } from 'date-fns';
 import TableActions from './table-actions';
 import { DataTableProjectsProps } from '@/lib/types';
@@ -31,24 +24,19 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { CardDescription } from './ui/card';
-import { ActivityDetailsSheet } from './activity-details-sheet';
 
 export async function DataTableProjects({
   bureauName,
   searchParams,
 }: DataTableProjectsProps) {
   const currentPage = Number(searchParams?.page) || 1;
-  const [{ activities, totalPages }, filterOptions] = await Promise.all([
-    getActivities(bureauName, currentPage, searchParams?.year, searchParams?.semester, {
-      sort: searchParams?.sort,
-      project: searchParams?.project,
-      district: searchParams?.district,
-      mode: searchParams?.mode,
-      status: searchParams?.status,
-      month: searchParams?.month,
-    }),
-    getActivityFilterOptions(bureauName),
-  ]);
+  const { activities, totalPages } = await getActivities(
+    bureauName,
+    currentPage,
+    searchParams?.year,
+    searchParams?.semester,
+    searchParams?.stat,
+  );
 
   return (
     <div className='flex flex-col gap-3 w-full min-w-0'>
@@ -57,46 +45,20 @@ export async function DataTableProjects({
           <TableHeader className='bg-gray-100'>
             <TableRow>
               <TableHead className='w-25'>Activity ID</TableHead>
-              <TableHead>
-                <SortableDateHead />
-              </TableHead>
+              <TableHead>Date Range</TableHead>
               <TableHead>Bureau</TableHead>
-              <TableHead>
-                <FilterableHead
-                  label='Project'
-                  param='project'
-                  options={filterOptions.projects}
-                />
-              </TableHead>
+              <TableHead>Project</TableHead>
               <TableHead>Indicator</TableHead>
               <TableHead>Activity Name</TableHead>
               <TableHead>Activity Venue</TableHead>
-              <TableHead>
-                <FilterableHead
-                  label='District'
-                  param='district'
-                  options={filterOptions.districts}
-                />
-              </TableHead>
+              <TableHead>District</TableHead>
               <TableHead>City/Municipality</TableHead>
               <TableHead>Barangay</TableHead>
               <TableHead>Requesting Agency</TableHead>
-              <TableHead>
-                <FilterableHead
-                  label='Mode of Implementation'
-                  param='mode'
-                  options={filterOptions.modes}
-                />
-              </TableHead>
+              <TableHead>Mode of Implementation</TableHead>
               <TableHead>Target Sector</TableHead>
               <TableHead>Responsible Person</TableHead>
-              <TableHead>
-                <FilterableHead
-                  label='Status'
-                  param='status'
-                  options={filterOptions.statuses}
-                />
-              </TableHead>
+              <TableHead>Status</TableHead>
               <TableHead>Female</TableHead>
               <TableHead>Male</TableHead>
               <TableHead>Total</TableHead>
@@ -110,7 +72,7 @@ export async function DataTableProjects({
                   colSpan={19}
                   className='text-center text-muted-foreground py-8'
                 >
-                  No activities yet. Click "Add Data" to create one.
+                  No activities yet. Click `&quot;`Add Data`&quot;` to create one.
                 </TableCell>
               </TableRow>
             ) : (
@@ -166,7 +128,7 @@ export async function DataTableProjects({
                     )}
                   </TableCell>
                   <TableCell className='w-100'>
-                    <ActivityDetailsSheet activity={activity} />
+                    {activity.activityName}
                   </TableCell>
                   <TableCell>{activity.activityVenue ?? '—'}</TableCell>
                   <TableCell>
@@ -256,7 +218,10 @@ export async function DataTableProjects({
         <div className='flex flex-row items-center gap-2'>
           <AddDialog />
           <Button variant='outline'>
-            <Import className='h-4 w-4' /> Import Data
+            <Import className='h-4 w-4' /> Import
+          </Button>
+          <Button variant='outline'>
+            <Download className='h-4 w-4' /> Export
           </Button>
         </div>
         <PaginationComponent

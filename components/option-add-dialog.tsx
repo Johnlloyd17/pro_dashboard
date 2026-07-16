@@ -64,7 +64,8 @@ export default function OptionAddDialog({ labelId }: { labelId: string }) {
     );
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (isPending) return;
     startTransition(async () => {
       const result = await addOption(
@@ -92,6 +93,7 @@ export default function OptionAddDialog({ labelId }: { labelId: string }) {
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
+        <form onSubmit={handleSubmit}>
         <DialogHeader>
           <DialogTitle>Add Option</DialogTitle>
           <DialogDescription>
@@ -183,13 +185,14 @@ export default function OptionAddDialog({ labelId }: { labelId: string }) {
             Cancel
           </Button>
           <Button
-            onClick={handleSubmit}
+            type="submit"
             disabled={isPending || !optionName.trim()}
           >
             <Upload className="h-4 w-4" />{" "}
             {isPending ? "Saving..." : "Save Option"}
           </Button>
         </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

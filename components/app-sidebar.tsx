@@ -24,6 +24,7 @@ import {
   Box,
   ScanBarcode,
   Logs,
+  File,
 } from 'lucide-react';
 
 // This is sample data.
@@ -94,6 +95,11 @@ const data = {
           url: '#',
         },
       ],
+    },
+    {
+      title: 'Property Records',
+      url: '/property-records',
+      icon: <File />,
     },
   ],
   projects: [

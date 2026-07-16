@@ -76,73 +76,24 @@ export async function getActivities(
   page: number = 1,
   year?: string,
   semester?: string,
-  filters?: {
-    sort?: string;
-    project?: string;
-    district?: string;
-    mode?: string;
-    status?: string;
-    month?: string;
-  },
+  stat?: string,
 ) {
   const dateRange = getDateRangeFilter(year, semester);
 
-  // A month filter narrows to that month within the filtered year
-  // (or the current year when no year filter is active).
-  const monthNum = Number(filters?.month);
-  const monthRange =
-    monthNum >= 1 && monthNum <= 12
-      ? {
-          gte: new Date(Number(year) || new Date().getFullYear(), monthNum - 1, 1),
-          lte: new Date(
-            Number(year) || new Date().getFullYear(),
-            monthNum,
-            0,
-            23,
-            59,
-            59,
-          ),
-        }
-      : undefined;
+  const statFilter = getStatFilter(stat);
 
   const where = {
     ...(bureauName
       ? { bureau: { name: { equals: bureauName, mode: 'insensitive' as const } } }
       : {}),
-    ...(monthRange
-      ? { dateFrom: monthRange }
-      : dateRange
-        ? { dateFrom: dateRange }
-        : {}),
-    ...(filters?.project
-      ? { project: { name: { equals: filters.project, mode: 'insensitive' as const } } }
-      : {}),
-    ...(filters?.district
-      ? { district: { name: { equals: filters.district, mode: 'insensitive' as const } } }
-      : {}),
-    ...(filters?.mode
-      ? {
-          modeOfImplementation: {
-            name: { equals: filters.mode, mode: 'insensitive' as const },
-          },
-        }
-      : {}),
-    ...(filters?.status
-      ? { status: { name: { equals: filters.status, mode: 'insensitive' as const } } }
-      : {}),
+    ...(dateRange ? { dateFrom: dateRange } : {}),
+    ...statFilter,
   };
-
-  const orderBy =
-    filters?.sort === 'date_asc'
-      ? { dateFrom: 'asc' as const }
-      : filters?.sort === 'date_desc'
-        ? { dateFrom: 'desc' as const }
-        : { createdAt: 'desc' as const };
 
   const [activities, totalCount] = await Promise.all([
     prisma.activity.findMany({
       where,
-      orderBy,
+      orderBy: { createdAt: 'desc' },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
       include: {
@@ -165,30 +116,6 @@ export async function getActivities(
     activities,
     totalPages: Math.max(1, Math.ceil(totalCount / PAGE_SIZE)),
     currentPage: page,
-  };
-}
-
-export async function getActivityFilterOptions(bureauName?: string) {
-  const activities = await prisma.activity.findMany({
-    where: bureauName
-      ? { bureau: { name: { equals: bureauName, mode: 'insensitive' } } }
-      : {},
-    select: {
-      project: { select: { name: true } },
-      district: { select: { name: true } },
-      modeOfImplementation: { select: { name: true } },
-      status: { select: { name: true } },
-    },
-  });
-
-  const distinct = (values: (string | null | undefined)[]) =>
-    Array.from(new Set(values.filter((v): v is string => Boolean(v)))).sort();
-
-  return {
-    projects: distinct(activities.map((a) => a.project?.name)),
-    districts: distinct(activities.map((a) => a.district?.name)),
-    modes: distinct(activities.map((a) => a.modeOfImplementation?.name)),
-    statuses: distinct(activities.map((a) => a.status?.name)),
   };
 }
 
@@ -424,6 +351,29 @@ function getDateRangeFilter(year?: string, semester?: string) {
   return { gte: start, lte: end };
 }
 
+function getStatFilter(stat?: string) {
+  switch (stat) {
+    case 'planned-activities':
+      return {
+        status: { isNot: { name: { equals: 'Completed', mode: 'insensitive' as const } } },
+      };
+    case 'total-completers':
+      return { totalCount: { gt: 0 } };
+    case 'male-completers':
+      return { maleCount: { gt: 0 } };
+    case 'female-completers':
+      return { femaleCount: { gt: 0 } };
+    case 'total-municipalities':
+      return { municipalityOptionId: { not: null } };
+    case 'total-barangays':
+      return { barangay: { not: null } };
+    case 'total-sectors':
+      return { targetSectors: { some: {} } };
+    default:
+      return {};
+  }
+}
+
 type ActivityWhere = NonNullable<Parameters<typeof prisma.activity.count>[0]>['where'];
 
 async function measureAccomplishment(
@@ -612,6 +562,65 @@ export async function getActivityById(id: string) {
       indicators: true,
     },
   });
+}
+
+export async function getCybersecurityOverviewStats(
+  bureauName: string,
+  year?: string,
+  semester?: string,
+) {
+  const dateRange = getDateRangeFilter(year, semester);
+
+  const where = {
+    bureau: {
+      name: { equals: bureauName, mode: 'insensitive' as const },
+    },
+    ...(dateRange ? { dateFrom: dateRange } : {}),
+  };
+
+  const [
+    totalActivities,
+    plannedActivities,
+    participantsResult,
+    municipalities,
+    barangays,
+    sectors,
+  ] = await Promise.all([
+    prisma.activity.count({ where }),
+    prisma.activity.count({
+      where: {
+        ...where,
+        status: { isNot: { name: { equals: 'Completed', mode: 'insensitive' } } },
+      },
+    }),
+    prisma.activity.aggregate({
+      where,
+      _sum: { totalCount: true, maleCount: true, femaleCount: true },
+    }),
+    prisma.activity.groupBy({
+      by: ['municipalityOptionId'],
+      where,
+    }),
+    prisma.activity.groupBy({
+      by: ['barangay'],
+      where: { ...where, barangay: { not: null } },
+    }),
+    prisma.activityTargetSector.groupBy({
+      by: ['optionId'],
+      where: { activity: where },
+    }),
+  ]);
+
+  return {
+    totalActivities,
+    totalMunicipalities: municipalities.length,
+    totalBarangays: barangays.length,
+    totalSectors: sectors.length,
+    plannedActivities,
+    totalCompleters: participantsResult._sum.totalCount ?? 0,
+    maleCompleters: participantsResult._sum.maleCount ?? 0,
+    femaleCompleters: participantsResult._sum.femaleCount ?? 0,
+  };
 }
 
 export async function getOverallTargetAchievementRate(

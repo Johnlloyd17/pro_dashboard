@@ -39,6 +39,30 @@ export function NavMain({
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
+          const hasSubItems = item.items && item.items.length > 0
+
+          if (!hasSubItems) {
+            const isActive = item.url !== "#" && (
+              pathname === item.url ||
+              pathname.startsWith(`${item.url}/`)
+            )
+
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton
+                  tooltip={item.title}
+                  isActive={isActive}
+                  asChild
+                >
+                  <a href={item.url}>
+                    {item.icon}
+                    <span>{item.title}</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )
+          }
+
           const isActiveGroup = item.items?.some(
             (subItem) =>
               subItem.url !== "#" &&

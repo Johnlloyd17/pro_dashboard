@@ -1,9 +1,8 @@
 import {
-  getActivityStats,
+  getCybersecurityOverviewStats,
   getCompletedActivitiesByMunicipality,
   getGenderDemographics,
   getModeOfImplementationBreakdown,
-  getOverallTargetAchievementRate,
   getTargetAccomplishments,
 } from '@/app/actions/activity-actions';
 import { ActivityMap } from '@/components/activity-map';
@@ -13,19 +12,15 @@ import { CompletedActivitiesChart } from '@/components/completed-activities-char
 import { DataTableProjects } from '@/components/data-table-projects';
 import FilterTerm from '@/components/filter-term';
 import { TargetAnalyticsGrid } from '@/components/target-analytics-grid';
-import { TargetChartCard } from '@/components/target-chart-card';
-import { TargetVsAccomplishmentDistrictChart } from '@/components/target-vs-accomplishment';
 import { TargetsDialog } from '@/components/targets-dialog';
-import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
   CardDescription,
-  CardHeader,
   CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ViewTargets from '@/components/view-targets';
+import { OverviewStatCards } from '@/components/overview-stat-cards';
+import { Suspense } from 'react';
 
 export default async function CybersecurityPage({
   searchParams,
@@ -35,47 +30,67 @@ export default async function CybersecurityPage({
     year?: string;
     semester?: string;
     project?: string;
+    stat?: string;
   }>;
 }) {
   const params = await searchParams;
-  const stats = await getActivityStats(
-    'Cybersecurity',
-    params.year,
-    params.semester,
-  );
-  const achievementRate = await getOverallTargetAchievementRate(
+  const overviewStats = await getCybersecurityOverviewStats(
     'Cybersecurity',
     params.year,
     params.semester,
   );
 
-  const cybersecurityData = [
+  const topRowCards = [
     {
-      id: 'completed-activities',
-      title: 'Completed Activities',
-      value: stats.completedCount,
-      description: 'Activities completed to date.',
+      id: 'total-activities',
+      title: 'Total Activities',
+      value: overviewStats.totalActivities,
+      description: 'All recorded activities.',
     },
     {
-      id: 'upcoming-activities',
-      title: 'Upcoming Activities',
-      value: stats.upcomingCount,
-      description: 'Activities scheduled ahead.',
+      id: 'total-municipalities',
+      title: 'Total Municipalities',
+      value: overviewStats.totalMunicipalities,
+      description: 'Municipalities covered.',
     },
     {
-      id: 'total-participants',
-      title: 'Total Participants',
-      value: stats.totalParticipants,
-      description: 'Participants reached so far.',
+      id: 'total-barangays',
+      title: 'Total Barangay',
+      value: overviewStats.totalBarangays,
+      description: 'Barangays reached.',
     },
     {
-      id: 'achievement-rate',
-      title: 'Target Achievement Rate',
-      value: achievementRate !== null ? `${achievementRate}%` : '—',
-      description:
-        achievementRate !== null
-          ? 'Average progress across all set targets.'
-          : 'No targets set yet.',
+      id: 'total-sectors',
+      title: 'Total Sectors',
+      value: overviewStats.totalSectors,
+      description: 'Target sectors involved.',
+    },
+  ];
+
+  const bottomRowCards = [
+    {
+      id: 'planned-activities',
+      title: 'Planned Activities',
+      value: overviewStats.plannedActivities,
+      description: 'Activities yet to be completed.',
+    },
+    {
+      id: 'total-completers',
+      title: 'Total Completers',
+      value: overviewStats.totalCompleters,
+      description: 'Total participants reached.',
+    },
+    {
+      id: 'male-completers',
+      title: 'Male Completers',
+      value: overviewStats.maleCompleters,
+      description: 'Male participants reached.',
+    },
+    {
+      id: 'female-completers',
+      title: 'Female Completers',
+      value: overviewStats.femaleCompleters,
+      description: 'Female participants reached.',
     },
   ];
 
@@ -119,19 +134,9 @@ export default async function CybersecurityPage({
           <FilterTerm />
         </div>
       </div>
-      <div className='grid grid-cols-4 gap-4'>
-        {cybersecurityData.map((item) => (
-          <Card key={item.id} className='col-span-1'>
-            <CardHeader>
-              <CardTitle>{item.title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardTitle className='text-3xl'>{item.value}</CardTitle>
-              <CardDescription>{item.description}</CardDescription>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <Suspense>
+        <OverviewStatCards topRow={topRowCards} bottomRow={bottomRowCards} />
+      </Suspense>
       <Tabs defaultValue='overview' className='w-full col-span-4'>
         <TabsList className='flex flex-row gap-2'>
           <TabsTrigger value='overview'>Overview</TabsTrigger>

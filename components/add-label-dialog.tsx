@@ -22,7 +22,8 @@ export function AddLabelDialog() {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  const handleSubmit = () => {
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
     startTransition(async () => {
       try {
         await addLabel(name);
@@ -44,35 +45,37 @@ export function AddLabelDialog() {
         </Button>
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add Label</DialogTitle>
-          <DialogDescription>Add label</DialogDescription>
-        </DialogHeader>
-        <FieldGroup>
-          <Field>
-            <FieldLabel htmlFor="label">Label Name</FieldLabel>
-            <Input
-              id="label"
-              type="text"
-              placeholder="Enter a label name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </Field>
-        </FieldGroup>
-        <DialogFooter className="flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setOpen(false)}
-          >
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={isPending || !name.trim()}>
-            <Upload className="w-4 h-4" />
-            {isPending ? "Saving..." : "Submit"}
-          </Button>
-        </DialogFooter>
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>Add Label</DialogTitle>
+            <DialogDescription>Add label</DialogDescription>
+          </DialogHeader>
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="label">Label Name</FieldLabel>
+              <Input
+                id="label"
+                type="text"
+                placeholder="Enter a label name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </Field>
+          </FieldGroup>
+          <DialogFooter className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isPending || !name.trim()}>
+              <Upload className="w-4 h-4" />
+              {isPending ? "Saving..." : "Submit"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

@@ -232,3 +232,24 @@ model ActivityLog {
   summary    String
   createdAt  DateTime @default(now())
 }
+
+model PropertyRecord {
+  id                    String    @id @default(cuid())
+  project               String?
+  itemNo                String?
+  classification        String?
+  quantity              Int       @default(0)
+  unit                  String?
+  descriptionModel      String?
+  receivedFrom          String?
+  propertyNumber        String?
+  icsParNumber          String?
+  serialNumber          String?
+  dateAcquired          DateTime?
+  accountableOfficer    String?
+  unitCost              Float     @default(0)
+  estimatedUsefulLife   String?
+  receivedTransferred   String?
+  remarks               String?
+  createdAt             DateTime  @default(now())
+}
