@@ -74,3 +74,28 @@
 - **Created** `components/add-property-record-dialog.tsx` — a dialog with a 2-column grid form for all 16 fields.
 - **Added** Import and Export buttons (placeholder) matching the existing design pattern from `data-table-projects.tsx`.
 - **Applied** clickable stat cards using `OverviewStatCards` component — Total Records, Total Items, Total Value cards filter the table when clicked.
+
+---
+
+### 2026-07-16
+
+**FW4A Bureau - New Page and Full Backend**
+
+- **Added** `Fw4aRecord` model to `prisma/schema.prisma` with 11 fields (locality, barangay, district, locations, siteType, siteCode, strategy, status, reasonForOutage, remarks).
+- **Ran** Prisma migration `add_fw4a_record` and regenerated client.
+- **Added** `Fw4aRecord` TypeScript type in `lib/types.ts`.
+- **Created** `app/actions/fw4a-actions.ts` with full CRUD operations:
+  - `addFw4aRecord` — create a new FW4A record
+  - `getFw4aRecords` — paginated + searchable + filtered (locality, district, siteType, status, strategy)
+  - `updateFw4aRecord` — update an existing record
+  - `deleteFw4aRecord` — single delete
+  - `deleteFw4aRecords` — bulk delete
+  - `getFw4aRecordStats` — stat cards data (total records, active/inactive sites, LGU/barangay penetration rates)
+  - `getFw4aRecordFilterOptions` — distinct values for all dropdown filters
+  - `importFw4aRecords` — CSV import
+  - `exportFw4aRecords` — CSV export
+- **Created** `app/(bureaus)/fw4a/page.tsx` — async server component with 4 stat cards and data table.
+- **Created** `components/fw4a-records-table.tsx` — data table with 12 columns (No., Locality, Barangay, District, Locations, Site Type, Site Code, Strategy, Status, Reason for Outage, Remarks, Option), search bar, 5 dropdown filters, pagination, checkbox selection, edit/delete actions, delete confirmation dialog, and Import/Export CSV buttons.
+- **Created** `components/add-fw4a-record-dialog.tsx` — dialog with a 2-column grid form for all 10 fields.
+- **Updated** `components/app-sidebar.tsx` — changed FW4A sidebar link from `#` to `/fw4a`.
+- **Stat cards:** LGU Penetration Rate, Barangay Penetration Rate (placeholder 0%), Active Access Points, Inactive Access Points.

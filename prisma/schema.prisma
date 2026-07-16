@@ -253,3 +253,18 @@ model PropertyRecord {
   remarks               String?
   createdAt             DateTime  @default(now())
 }
+
+model Fw4aRecord {
+  id                String    @id @default(cuid())
+  locality          String?
+  barangay          String?
+  district          String?
+  locations         String?
+  siteType          String?
+  siteCode          String?
+  strategy          String?
+  status            String?
+  reasonForOutage   String?
+  remarks           String?
+  createdAt         DateTime  @default(now())
+}

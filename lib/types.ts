@@ -100,3 +100,18 @@ export interface PropertyRecord {
   remarks: string | null;
   createdAt: Date;
 }
+
+export interface Fw4aRecord {
+  id: string;
+  locality: string | null;
+  barangay: string | null;
+  district: string | null;
+  locations: string | null;
+  siteType: string | null;
+  siteCode: string | null;
+  strategy: string | null;
+  status: string | null;
+  reasonForOutage: string | null;
+  remarks: string | null;
+  createdAt: Date;
+}

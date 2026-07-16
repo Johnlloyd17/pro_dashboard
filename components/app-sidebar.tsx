@@ -24,7 +24,6 @@ import {
   Box,
   ScanBarcode,
   Logs,
-  File,
 } from 'lucide-react';
 
 // This is sample data.
@@ -50,8 +49,40 @@ const data = {
           url: '/ilcdb',
         },
         {
+          title: 'CSB',
+          url: '/csb',
+        },
+        {
+          title: 'PNPKI',
+          url: '/pnpki',
+        },
+        {
+          title: 'ELGU',
+          url: '/elgu',
+        },
+        {
+          title: 'IIDB',
+          url: '/iidb',
+        },
+        {
+          title: 'GECS',
+          url: '/gecs',
+        },
+        {
+          title: 'EGOV',
+          url: '/egov',
+        },
+        {
+          title: 'GOVNET',
+          url: '/govnet',
+        },
+        {
           title: 'FW4A',
-          url: '#',
+          url: '/fw4a',
+        },
+        {
+          title: 'OTHERS',
+          url: '/others',
         },
       ],
     },
@@ -67,6 +98,10 @@ const data = {
         {
           title: 'Equipment Monitoring',
           url: '#',
+        },
+        {
+          title: 'Property Records',
+          url: '/property-records',
         },
       ],
     },
@@ -95,11 +130,6 @@ const data = {
           url: '#',
         },
       ],
-    },
-    {
-      title: 'Property Records',
-      url: '/property-records',
-      icon: <File />,
     },
   ],
   projects: [
