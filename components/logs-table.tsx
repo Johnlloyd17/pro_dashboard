@@ -37,9 +37,12 @@ interface LogsTableProps {
 }
 
 const ACTION_STYLES: Record<string, string> = {
-  created: 'bg-green-100 text-green-800 border-green-200',
-  updated: 'bg-amber-100 text-amber-800 border-amber-200',
-  deleted: 'bg-red-100 text-red-800 border-red-200',
+  created:
+    'bg-green-100 text-green-800 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-900',
+  updated:
+    'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-900',
+  deleted:
+    'bg-red-100 text-red-800 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-900',
 };
 
 export default function LogsTable({
@@ -100,7 +103,7 @@ export default function LogsTable({
 
       <div className='w-full min-w-0 overflow-x-auto border rounded-base custom-scrollbar'>
         <Table className='w-max min-w-full'>
-          <TableHeader className='bg-gray-100'>
+          <TableHeader className='bg-muted'>
             <TableRow>
               <TableHead>Timestamp</TableHead>
               <TableHead>Action</TableHead>
@@ -129,7 +132,7 @@ export default function LogsTable({
                       variant='outline'
                       className={
                         ACTION_STYLES[log.action] ??
-                        'bg-gray-100 text-gray-800 border-gray-200'
+                        'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
                       }
                     >
                       {log.action}

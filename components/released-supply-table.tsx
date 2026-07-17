@@ -121,7 +121,7 @@ export default function ReleasedSupplyTable({
       </div>
       <div className="w-full min-w-0 overflow-x-auto border rounded-base custom-scrollbar">
         <Table className="w-max min-w-full">
-          <TableHeader className="bg-gray-100">
+          <TableHeader className="bg-muted">
             <TableRow>
               <TableHead className="w-25">Supply ID</TableHead>
               <TableHead>Supply Name</TableHead>

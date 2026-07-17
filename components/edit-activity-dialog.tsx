@@ -199,7 +199,7 @@ export function EditActivityDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl bg-neutral-50 overflow-auto">
+      <DialogContent className="sm:max-w-4xl bg-neutral-50 dark:bg-neutral-900 overflow-auto">
         {loading ? (
           <div className="py-12 text-center text-sm text-muted-foreground">
             Loading...
@@ -305,7 +305,7 @@ export function EditActivityDialog({
                       id="edit-activity-name"
                       value={activityName}
                       onChange={(e) => setActivityName(e.target.value)}
-                      className="bg-white"
+                      className="bg-white dark:bg-input/30"
                     />
                   </Field>
                 </FieldGroup>
@@ -321,7 +321,7 @@ export function EditActivityDialog({
                       id="edit-activity-venue"
                       value={activityVenue}
                       onChange={(e) => setActivityVenue(e.target.value)}
-                      className="bg-white"
+                      className="bg-white dark:bg-input/30"
                     />
                   </Field>
 
@@ -364,7 +364,7 @@ export function EditActivityDialog({
                       id="edit-barangay"
                       value={barangay}
                       onChange={(e) => setBarangay(e.target.value)}
-                      className="bg-white"
+                      className="bg-white dark:bg-input/30"
                       disabled={!municipality.selectedId}
                     />
                   </Field>
@@ -448,7 +448,7 @@ export function EditActivityDialog({
                       type="number"
                       value={femaleCount}
                       onChange={(e) => setFemaleCount(e.target.value)}
-                      className="bg-white"
+                      className="bg-white dark:bg-input/30"
                     />
                   </Field>
                   <Field>
@@ -458,7 +458,7 @@ export function EditActivityDialog({
                       type="number"
                       value={maleCount}
                       onChange={(e) => setMaleCount(e.target.value)}
-                      className="bg-white"
+                      className="bg-white dark:bg-input/30"
                     />
                   </Field>
                   <Field>
@@ -470,7 +470,7 @@ export function EditActivityDialog({
                       value={
                         femaleCount || maleCount ? totalCount.toString() : ""
                       }
-                      className="bg-white"
+                      className="bg-white dark:bg-input/30"
                     />
                   </Field>
                 </FieldGroup>

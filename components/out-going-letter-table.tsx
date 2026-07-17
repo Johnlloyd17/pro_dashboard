@@ -67,7 +67,7 @@ export default function OutGoingLetters({
     <div className='flex flex-col gap-2'>
       <div className='w-full min-w-0 overflow-x-auto border rounded-base custom-scrollbar'>
         <Table className='w-max min-w-full'>
-          <TableHeader className='bg-gray-100'>
+          <TableHeader className='bg-muted'>
             <TableRow>
               <TableHead>Response ID</TableHead>
               <TableHead>Response File</TableHead>

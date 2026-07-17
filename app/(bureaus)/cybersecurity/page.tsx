@@ -1,11 +1,14 @@
 import {
+  getActivitiesForCalendar,
   getActivityStats,
   getCompletedActivitiesByMunicipality,
+  getCybersecurityHighlights,
   getGenderDemographics,
   getModeOfImplementationBreakdown,
   getOverallTargetAchievementRate,
   getTargetAccomplishments,
 } from '@/app/actions/activity-actions';
+import { ActivityCalendar } from '@/components/activity-calendar';
 import { ActivityMap } from '@/components/activity-map';
 import { ChartDemographics } from '@/components/chart-demographics';
 import { ChartModeOfImplementation } from '@/components/chart-mode-implementation';
@@ -48,6 +51,10 @@ export default async function CybersecurityPage({
     params.year,
     params.semester,
   );
+  const highlights = await getCybersecurityHighlights(
+    params.year,
+    params.semester,
+  );
 
   const cybersecurityData = [
     {
@@ -77,6 +84,30 @@ export default async function CybersecurityPage({
           ? 'Average progress across all set targets.'
           : 'No targets set yet.',
     },
+    {
+      id: 'ciesmd-completed',
+      title: 'Cybersecurity Awareness Campaigns',
+      value: highlights.ciesmdCompleted,
+      description: 'Completed activities under the CIESMD project.',
+    },
+    {
+      id: 'pnpki-trainings',
+      title: "PNPKI User's Trainings Conducted",
+      value: highlights.trainingsConducted,
+      description: 'Trainings upon request or with partner stakeholders.',
+    },
+    {
+      id: 'pnpki-awareness',
+      title: 'PNPKI Awareness Campaigns',
+      value: highlights.awarenessCampaigns,
+      description: 'Government entities reached with PNPKI awareness.',
+    },
+    {
+      id: 'digital-certificates',
+      title: 'Digital Certificates Issued',
+      value: highlights.certificatesIssued,
+      description: 'Participants trained as PNPKI users.',
+    },
   ];
 
   const municipalityData = await getCompletedActivitiesByMunicipality(
@@ -102,6 +133,7 @@ export default async function CybersecurityPage({
     params.year,
     params.semester,
   );
+  const calendarData = await getActivitiesForCalendar('Cybersecurity');
 
   return (
     <main className='flex flex-col gap-4'>
@@ -132,13 +164,14 @@ export default async function CybersecurityPage({
           </Card>
         ))}
       </div>
-      <Tabs defaultValue='overview' className='w-full col-span-4'>
+      <Tabs defaultValue='analytics' className='w-full col-span-4'>
         <TabsList className='flex flex-row gap-2'>
-          <TabsTrigger value='overview'>Overview</TabsTrigger>
-          <TabsTrigger value='map'>Map</TabsTrigger>
           <TabsTrigger value='analytics'>Analytics</TabsTrigger>
+          <TabsTrigger value='activities'>Activities</TabsTrigger>
+          <TabsTrigger value='map'>Map</TabsTrigger>
+          <TabsTrigger value='calendar'>Calendar</TabsTrigger>
         </TabsList>
-        <TabsContent value='overview'>
+        <TabsContent value='activities'>
           <DataTableProjects bureauName='Cybersecurity' searchParams={params} />
         </TabsContent>
         <TabsContent value='map'>
@@ -158,6 +191,9 @@ export default async function CybersecurityPage({
             <ChartDemographics data={genderData} />
             <ChartModeOfImplementation data={modeData} />
           </div>
+        </TabsContent>
+        <TabsContent value='calendar'>
+          <ActivityCalendar activities={calendarData} />
         </TabsContent>
       </Tabs>
     </main>

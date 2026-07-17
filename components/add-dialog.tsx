@@ -190,7 +190,7 @@ export default function AddDialog() {
           Add Data
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-4xl bg-neutral-50 overflow-auto">
+      <DialogContent className="sm:max-w-4xl bg-neutral-50 dark:bg-neutral-900 overflow-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Add Data</DialogTitle>
@@ -296,7 +296,7 @@ export default function AddDialog() {
                   <Input
                     id="activity-name"
                     placeholder="Enter activity name"
-                    className="bg-white"
+                    className="bg-white dark:bg-input/30"
                     value={activityName}
                     onChange={(e) => setActivityName(e.target.value)}
                   />
@@ -313,7 +313,7 @@ export default function AddDialog() {
                   <Input
                     id="activity-venue"
                     placeholder="Enter activity venue"
-                    className="bg-white"
+                    className="bg-white dark:bg-input/30"
                     value={activityVenue}
                     onChange={(e) => setActivityVenue(e.target.value)}
                   />
@@ -364,7 +364,7 @@ export default function AddDialog() {
                         ? "Enter a barangay"
                         : "Select a city/municipality first"
                     }
-                    className="bg-white"
+                    className="bg-white dark:bg-input/30"
                     disabled={!municipality.selectedId}
                     value={barangay}
                     onChange={(e) => setBarangay(e.target.value)}
@@ -452,7 +452,7 @@ export default function AddDialog() {
                     id="female"
                     type="number"
                     placeholder="0"
-                    className="bg-white"
+                    className="bg-white dark:bg-input/30"
                     value={femaleCount}
                     onChange={(e) => setFemaleCount(e.target.value)}
                   />
@@ -465,7 +465,7 @@ export default function AddDialog() {
                     id="male"
                     type="number"
                     placeholder="0"
-                    className="bg-white"
+                    className="bg-white dark:bg-input/30"
                     value={maleCount}
                     onChange={(e) => setMaleCount(e.target.value)}
                   />
@@ -479,7 +479,7 @@ export default function AddDialog() {
                     type="number"
                     placeholder="0"
                     disabled
-                    className="bg-white"
+                    className="bg-white dark:bg-input/30"
                     value={
                       femaleCount || maleCount ? totalCount.toString() : ""
                     }

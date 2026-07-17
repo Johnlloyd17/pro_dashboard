@@ -51,9 +51,12 @@ interface BillsTableProps {
 }
 
 const BILLING_TYPE_STYLES: Record<string, string> = {
-  'Internet Bill': 'bg-red-100 text-red-800 border-red-200',
-  'Electricity Bill': 'bg-amber-100 text-amber-800 border-amber-200',
-  'Water Bill': 'bg-blue-100 text-blue-800 border-blue-200',
+  'Internet Bill':
+    'bg-red-100 text-red-800 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-900',
+  'Electricity Bill':
+    'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-900',
+  'Water Bill':
+    'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-900',
 };
 
 const currencyFormatter = new Intl.NumberFormat('en-PH', {
@@ -108,7 +111,7 @@ export default function BillsTable({
     <div className='flex flex-col gap-2'>
       <div className='w-full min-w-0 overflow-x-auto border rounded-base custom-scrollbar'>
         <Table className='w-max min-w-full'>
-          <TableHeader className='bg-gray-100'>
+          <TableHeader className='bg-muted'>
             <TableRow>
               <TableHead>Date Received</TableHead>
               <TableHead>Type of Billing</TableHead>
@@ -147,7 +150,7 @@ export default function BillsTable({
                       variant='outline'
                       className={
                         BILLING_TYPE_STYLES[bill.billingType] ??
-                        'bg-gray-100 text-gray-800 border-gray-200'
+                        'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
                       }
                     >
                       {bill.billingType}
