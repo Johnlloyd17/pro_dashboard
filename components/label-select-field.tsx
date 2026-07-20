@@ -28,7 +28,7 @@ export function LabelSelectField({
 }: LabelSelectFieldProps) {
   return (
     <Select value={value} onValueChange={onValueChange} disabled={disabled}>
-      <SelectTrigger className='bg-white' id={id}>
+      <SelectTrigger className='bg-white dark:bg-input/30' id={id}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>

@@ -119,6 +119,121 @@ export async function getActivities(
   };
 }
 
+export async function getActivityFilterOptions(bureauName?: string) {
+  const activities = await prisma.activity.findMany({
+    where: bureauName
+      ? { bureau: { name: { equals: bureauName, mode: 'insensitive' } } }
+      : {},
+    select: {
+      project: { select: { name: true } },
+      district: { select: { name: true } },
+      modeOfImplementation: { select: { name: true } },
+      status: { select: { name: true } },
+    },
+  });
+
+  const distinct = (values: (string | null | undefined)[]) =>
+    Array.from(new Set(values.filter((v): v is string => Boolean(v)))).sort();
+
+  return {
+    projects: distinct(activities.map((a) => a.project?.name)),
+    districts: distinct(activities.map((a) => a.district?.name)),
+    modes: distinct(activities.map((a) => a.modeOfImplementation?.name)),
+    statuses: distinct(activities.map((a) => a.status?.name)),
+  };
+}
+
+const PNPKI_TRAINING_INDICATOR =
+  "Number of PNPKI User's Training conducted *upon request *engagement/ collab with partnet stakeholders";
+const PNPKI_AWARENESS_INDICATOR =
+  'Number of Government Entities conducted with PNPKI awareness campaigns';
+const PNPKI_TRAINED_INDICATOR = "Number of PNPKI User's Trained";
+
+export async function getCybersecurityHighlights(
+  year?: string,
+  semester?: string,
+) {
+  const dateRange = getDateRangeFilter(year, semester);
+
+  const completedBase = {
+    bureau: { name: { equals: 'Cybersecurity', mode: 'insensitive' as const } },
+    status: { name: { equals: 'Completed', mode: 'insensitive' as const } },
+    ...(dateRange ? { dateFrom: dateRange } : {}),
+  };
+
+  const indicatorWhere = (name: string) => ({
+    ...completedBase,
+    indicators: { some: { name: { equals: name, mode: 'insensitive' as const } } },
+  });
+
+  const [ciesmdCompleted, trainingsConducted, awarenessCampaigns, trainedAgg] =
+    await Promise.all([
+      prisma.activity.count({
+        where: {
+          ...completedBase,
+          project: { name: { equals: 'CIESMD', mode: 'insensitive' } },
+        },
+      }),
+      prisma.activity.count({ where: indicatorWhere(PNPKI_TRAINING_INDICATOR) }),
+      prisma.activity.count({
+        where: indicatorWhere(PNPKI_AWARENESS_INDICATOR),
+      }),
+      prisma.activity.aggregate({
+        where: indicatorWhere(PNPKI_TRAINED_INDICATOR),
+        _sum: { totalCount: true },
+      }),
+    ]);
+
+  const trainedSum = trainedAgg._sum as { totalCount: number | null };
+
+  return {
+    ciesmdCompleted,
+    trainingsConducted,
+    awarenessCampaigns,
+    certificatesIssued: trainedSum?.totalCount ?? 0,
+  };
+}
+
+export async function getActivitiesForCalendar(bureauName?: string) {
+  const activities = await prisma.activity.findMany({
+    where: bureauName
+      ? { bureau: { name: { equals: bureauName, mode: 'insensitive' } } }
+      : {},
+    select: {
+      id: true,
+      activityName: true,
+      dateFrom: true,
+      dateTo: true,
+      status: { select: { name: true } },
+      project: { select: { name: true } },
+    },
+    orderBy: { dateFrom: 'asc' },
+  });
+
+  return activities.map((a) => ({
+    id: a.id,
+    activityName: a.activityName,
+    dateFrom: a.dateFrom,
+    dateTo: a.dateTo,
+    status: a.status?.name ?? null,
+    projectName: a.project?.name ?? null,
+  }));
+}
+
+export async function deleteActivities(ids: string[]) {
+  try {
+    if (ids.length === 0) {
+      return { success: false, error: 'No activities selected' };
+    }
+    await prisma.activity.deleteMany({ where: { id: { in: ids } } });
+    revalidatePath('/');
+    return { success: true };
+  } catch (error) {
+    console.error('deleteActivities error:', error);
+    return { success: false, error: 'Failed to delete activities' };
+  }
+}
+
 export async function deleteActivity(id: string) {
   try {
     await prisma.activity.delete({ where: { id } });
@@ -200,6 +315,37 @@ const DISTRICT_2_MUNICIPALITIES = [
   'Tagana-an',
   'Tubod',
 ];
+
+export async function getLguPenetrationRate(
+  bureauName: string,
+  year?: string,
+  semester?: string,
+) {
+  const dateRange = getDateRangeFilter(year, semester);
+
+  const completedActivities = await prisma.activity.findMany({
+    where: {
+      bureau: { name: { equals: bureauName, mode: 'insensitive' } },
+      status: { name: { equals: 'Completed', mode: 'insensitive' } },
+      ...(dateRange ? { dateFrom: dateRange } : {}),
+    },
+    select: { municipality: { select: { name: true } } },
+  });
+
+  const allLgus = [...DISTRICT_1_MUNICIPALITIES, ...DISTRICT_2_MUNICIPALITIES];
+  const covered = new Set(
+    completedActivities
+      .map((a) => a.municipality?.name)
+      .filter((name): name is string => Boolean(name)),
+  );
+  const reached = allLgus.filter((name) => covered.has(name)).length;
+
+  return {
+    reached,
+    total: allLgus.length,
+    rate: Math.round((reached / allLgus.length) * 100),
+  };
+}
 
 export async function getCompletedActivitiesByMunicipality(
   bureauName: string,
@@ -433,6 +579,24 @@ export async function getTargetAccomplishments(
           : {}),
       };
 
+      // Percentage indicators have a fixed 100% target: they count as fully
+      // accomplished once at least one matching activity is completed in the
+      // target's term, regardless of district.
+      if (target.measurementType === 'percentage') {
+        const count = await prisma.activity.count({ where: baseWhere });
+        const done = count > 0 ? 100 : 0;
+        return {
+          indicator: target.name,
+          semester: target.semester,
+          measurementType: target.measurementType,
+          target1stDistrict: 100,
+          target2ndDistrict: 100,
+          accomplished1st: done,
+          accomplished2nd: done,
+          projectName: target.project?.name ?? null,
+        };
+      }
+
       const [accomplished1st, accomplished2nd] = await Promise.all([
         district1Id
           ? measureAccomplishment(
@@ -641,20 +805,17 @@ export async function getOverallTargetAchievementRate(
     (t) => t.measurementType !== 'participants',
   );
 
-  if (targetData.length === 0) {
-    return null;
-  }
+  // Average each target's own completion ratio so a large-volume target (or
+  // a percentage target's fixed 100 units) can't dominate the blend.
+  const ratios = targetData
+    .map((t) => {
+      const total = t.target1stDistrict + t.target2ndDistrict;
+      if (total === 0) return null;
+      return (t.accomplished1st + t.accomplished2nd) / total;
+    })
+    .filter((r): r is number => r !== null);
 
-  const totalTarget = targetData.reduce(
-    (sum, t) => sum + t.target1stDistrict + t.target2ndDistrict,
-    0,
-  );
-  const totalAccomplished = targetData.reduce(
-    (sum, t) => sum + t.accomplished1st + t.accomplished2nd,
-    0,
-  );
+  if (ratios.length === 0) return null;
 
-  if (totalTarget === 0) return null;
-
-  return Math.round((totalAccomplished / totalTarget) * 100);
+  return Math.round((ratios.reduce((sum, r) => sum + r, 0) / ratios.length) * 100);
 }

@@ -48,7 +48,6 @@ export function AddLabelDialog() {
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Add Label</DialogTitle>
-            <DialogDescription>Add label</DialogDescription>
           </DialogHeader>
           <FieldGroup>
             <Field>

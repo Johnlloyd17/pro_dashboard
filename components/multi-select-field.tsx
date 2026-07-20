@@ -48,7 +48,7 @@ export function MultiSelectField({
                     <Badge variant='secondary' className='flex-none max-w-37.5'>
                       <span className='truncate'>{option.name}</span>
                       <div
-                        className='ml-1 cursor-pointer outline-none shrink-0 hover:bg-neutral-200'
+                        className='ml-1 cursor-pointer outline-none shrink-0 hover:bg-neutral-200 dark:hover:bg-neutral-700'
                         onMouseDown={(e) => {
                           e.preventDefault();
                           e.stopPropagation();

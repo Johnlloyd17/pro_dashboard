@@ -30,7 +30,7 @@ export default function SupplyRecordTable({
     <div className="flex flex-col gap-3 w-full min-w-0">
       <div className="w-full min-w-0 overflow-x-auto border rounded-base custom-scrollbar">
         <Table className="w-max min-w-full">
-          <TableHeader className="bg-gray-100">
+          <TableHeader className="bg-muted">
             <TableRow>
               <TableHead className="w-25">Record ID</TableHead>
               <TableHead>Time</TableHead>

@@ -49,7 +49,7 @@ export function ActivityDetailsSheet({ activity }: ActivityDetailsSheetProps) {
         <span
           role='button'
           tabIndex={0}
-          className='cursor-pointer text-primary font-medium hover:underline underline-offset-2'
+          className='cursor-pointer dark:text-white text-primary font-medium hover:underline underline-offset-2'
         >
           {activity.activityName}
         </span>

@@ -1,4 +1,5 @@
 import { getLabels } from '@/app/actions/label-action';
+import { AppearanceSettings } from '@/components/appearance-settings';
 import OptionTable from '@/components/option-table';
 import { CardDescription, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -36,6 +37,9 @@ export default async function SettingPage() {
               Password
             </TabsTrigger>
           </TabsList>
+          <TabsContent value='appearance'>
+            <AppearanceSettings />
+          </TabsContent>
           <TabsContent value='account'>
             <OptionTable labels={labels} />
           </TabsContent>
