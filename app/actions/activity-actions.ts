@@ -243,6 +243,66 @@ export async function getCybersecurityHighlights(
   };
 }
 
+export async function getIlcdbHighlights(year?: string, semester?: string) {
+  const dateRange = getDateRangeFilter(year, semester);
+
+  const completedBase = {
+    bureau: { name: { equals: 'ILCDB', mode: 'insensitive' as const } },
+    status: { name: { equals: 'Completed', mode: 'insensitive' as const } },
+    ...(dateRange ? { dateFrom: dateRange } : {}),
+  };
+
+  // Indicator names are long and prone to small wording tweaks, so match on
+  // distinctive fragments instead of the full text.
+  const indicatorWhere = (fragment: string) => ({
+    ...completedBase,
+    indicators: {
+      some: { name: { contains: fragment, mode: 'insensitive' as const } },
+    },
+  });
+
+  const [
+    centerUsersAgg,
+    centersEstablished,
+    dltConducted,
+    skillsGapSurveys,
+    dwiaTrainings,
+    certificationExams,
+    individualsTrainedAgg,
+  ] = await Promise.all([
+    prisma.activity.aggregate({
+      where: indicatorWhere('Center Users Served'),
+      _sum: { totalCount: true },
+    }),
+    prisma.activity.count({ where: indicatorWhere('Center Establishment') }),
+    prisma.activity.count({ where: indicatorWhere('Center Activities') }),
+    prisma.activity.count({ where: indicatorWhere('Skills Gap') }),
+    prisma.activity.count({ where: indicatorWhere('DWIA') }),
+    prisma.activity.count({
+      where: indicatorWhere('Certification Examination'),
+    }),
+    prisma.activity.aggregate({
+      where: indicatorWhere('Number of Individuals Trained'),
+      _sum: { totalCount: true },
+    }),
+  ]);
+
+  const centerUsersSum = centerUsersAgg._sum as { totalCount: number | null };
+  const trainedSum = individualsTrainedAgg._sum as {
+    totalCount: number | null;
+  };
+
+  return {
+    centerUsersServed: centerUsersSum?.totalCount ?? 0,
+    centersEstablished,
+    dltConducted,
+    skillsGapSurveys,
+    dwiaTrainings,
+    certificationExams,
+    individualsTrained: trainedSum?.totalCount ?? 0,
+  };
+}
+
 export async function getActivitiesForCalendar(bureauName?: string) {
   const activities = await prisma.activity.findMany({
     where: bureauName
