@@ -99,3 +99,34 @@
 - **Created** `components/add-fw4a-record-dialog.tsx` — dialog with a 2-column grid form for all 10 fields.
 - **Updated** `components/app-sidebar.tsx` — changed FW4A sidebar link from `#` to `/fw4a`.
 - **Stat cards:** LGU Penetration Rate, Barangay Penetration Rate (placeholder 0%), Active Access Points, Inactive Access Points.
+
+---
+
+### 2026-07-20
+
+**Bureau Pages - Upgraded from Placeholder to Full Dashboards (7 Pages)**
+
+- **Replaced** the `UnderDevelopment` placeholder component on 7 bureau pages with fully functional dashboard pages wired to backend server actions.
+- **Standard variant** (4 stat cards) — applied to **CSB**, **EGOV**, **ELGU**, **GOVNET**, **IIDB**:
+  - Fetches `getActivityStats()` for Completed Activities, Upcoming Activities, Total Participants, and Target Achievement Rate.
+  - Fetches `getCompletedActivitiesByMunicipality()`, `getGenderDemographics()`, `getModeOfImplementationBreakdown()`, and `getTargetAccomplishments()` for analytics.
+  - Renders 4 stat cards in a grid, tabbed content (Overview / Map / Analytics), `DataTableProjects` for activities, `ActivityMap` for geographic view, and analytics charts (`ChartDemographics`, `ChartModeOfImplementation`, `CompletedActivitiesChart`, `TargetChartCard`).
+  - Includes `FilterTerm`, `ViewTargets`, and `TargetsDialog` controls in the header.
+- **Enhanced variant** (8 stat cards) — applied to **GECS**, **PNPKI**:
+  - Uses `getCybersecurityOverviewStats()` for 8 metrics across two rows (Total Activities, Total Municipalities, Total Barangay, Total Sectors / Planned Activities, Total Completers, Male Completers, Female Completers).
+  - Renders `OverviewStatCards` component with clickable stat-to-table filtering via URL `?stat=` parameter.
+  - Uses `TargetAnalyticsGrid` instead of individual `TargetChartCard` components for the analytics tab.
+  - All pages accept `searchParams` including `page`, `year`, `semester`, `project`, and `stat` for full filtering support.
+
+**Files modified:** `app/(bureaus)/csb/page.tsx`, `app/(bureaus)/egov/page.tsx`, `app/(bureaus)/elgu/page.tsx`, `app/(bureaus)/govnet/page.tsx`, `app/(bureaus)/iidb/page.tsx`, `app/(bureaus)/gecs/page.tsx`, `app/(bureaus)/pnpki/page.tsx`
+
+---
+
+**FW4A Bureau - Edit Record Functionality**
+
+- **Added** `getFw4aRecordById` server action in `app/actions/fw4a-actions.ts` to fetch a single FW4A record by ID for pre-filling the edit form.
+- **Created** `components/edit-fw4a-record-dialog.tsx` — a dialog component with a 2-column grid form that loads existing record data via `getFw4aRecordById`, allows editing all 10 fields, and saves via `updateFw4aRecord`. Includes loading state, form submission with Enter key support, and toast notifications.
+- **Updated** `components/fw4a-records-table.tsx` — wired the existing Pencil (edit) icon button on each row to open the `EditFw4aRecordDialog` with the corresponding record ID. Added `editingRecordId` state to manage dialog open/close lifecycle.
+
+**Files modified:** `app/actions/fw4a-actions.ts`, `components/fw4a-records-table.tsx`
+**Files created:** `components/edit-fw4a-record-dialog.tsx`

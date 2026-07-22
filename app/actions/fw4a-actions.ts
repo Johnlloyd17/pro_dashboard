@@ -108,6 +108,16 @@ export async function getFw4aRecords(
   };
 }
 
+export async function getFw4aRecordById(id: string) {
+  try {
+    const record = await prisma.fw4aRecord.findUnique({ where: { id } });
+    return record;
+  } catch (error) {
+    console.error('getFw4aRecordById error:', error);
+    return null;
+  }
+}
+
 export async function updateFw4aRecord(
   id: string,
   input: AddFw4aRecordInput,

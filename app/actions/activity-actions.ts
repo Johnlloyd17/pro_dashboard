@@ -69,7 +69,8 @@ export async function addActivity(input: AddActivityInput) {
   }
 }
 
-const PAGE_SIZE = 10;
+const DEFAULT_PAGE_SIZE = 10;
+const VALID_PAGE_SIZES = [10, 25, 50, 100, 150, 200];
 
 export async function getActivities(
   bureauName?: string,
@@ -77,10 +78,46 @@ export async function getActivities(
   year?: string,
   semester?: string,
   stat?: string,
+  filters?: {
+    sort?: string;
+    project?: string;
+    district?: string;
+    mode?: string;
+    status?: string;
+    month?: string;
+    search?: string;
+    pageSize?: number;
+  },
 ) {
   const dateRange = getDateRangeFilter(year, semester);
-
   const statFilter = getStatFilter(stat);
+  const pageSize = VALID_PAGE_SIZES.includes(filters?.pageSize ?? NaN) ? filters!.pageSize! : DEFAULT_PAGE_SIZE;
+
+  const searchFilter = filters?.search
+    ? {
+        OR: [
+          { activityName: { contains: filters.search, mode: 'insensitive' as const } },
+          { activityVenue: { contains: filters.search, mode: 'insensitive' as const } },
+          { barangay: { contains: filters.search, mode: 'insensitive' as const } },
+          { municipality: { name: { contains: filters.search, mode: 'insensitive' as const } } },
+          { requestingAgency: { name: { contains: filters.search, mode: 'insensitive' as const } } },
+        ],
+      }
+    : {};
+
+  const dropdownFilters: Record<string, unknown> = {};
+  if (filters?.project) {
+    dropdownFilters.project = { name: { equals: filters.project, mode: 'insensitive' as const } };
+  }
+  if (filters?.district) {
+    dropdownFilters.district = { name: { equals: filters.district, mode: 'insensitive' as const } };
+  }
+  if (filters?.mode) {
+    dropdownFilters.modeOfImplementation = { name: { equals: filters.mode, mode: 'insensitive' as const } };
+  }
+  if (filters?.status) {
+    dropdownFilters.status = { name: { equals: filters.status, mode: 'insensitive' as const } };
+  }
 
   const where = {
     ...(bureauName
@@ -88,14 +125,16 @@ export async function getActivities(
       : {}),
     ...(dateRange ? { dateFrom: dateRange } : {}),
     ...statFilter,
+    ...searchFilter,
+    ...dropdownFilters,
   };
 
   const [activities, totalCount] = await Promise.all([
     prisma.activity.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
       include: {
         bureau: true,
         project: true,
@@ -114,8 +153,9 @@ export async function getActivities(
 
   return {
     activities,
-    totalPages: Math.max(1, Math.ceil(totalCount / PAGE_SIZE)),
+    totalPages: Math.max(1, Math.ceil(totalCount / pageSize)),
     currentPage: page,
+    totalCount,
   };
 }
 
@@ -141,6 +181,73 @@ export async function getActivityFilterOptions(bureauName?: string) {
     modes: distinct(activities.map((a) => a.modeOfImplementation?.name)),
     statuses: distinct(activities.map((a) => a.status?.name)),
   };
+}
+
+export async function exportActivities(
+  bureauName?: string,
+  year?: string,
+  semester?: string,
+  filters?: {
+    project?: string;
+    district?: string;
+    mode?: string;
+    status?: string;
+    search?: string;
+  },
+) {
+  const dateRange = getDateRangeFilter(year, semester);
+
+  const searchFilter = filters?.search
+    ? {
+        OR: [
+          { activityName: { contains: filters.search, mode: 'insensitive' as const } },
+          { activityVenue: { contains: filters.search, mode: 'insensitive' as const } },
+          { barangay: { contains: filters.search, mode: 'insensitive' as const } },
+          { municipality: { name: { contains: filters.search, mode: 'insensitive' as const } } },
+          { requestingAgency: { name: { contains: filters.search, mode: 'insensitive' as const } } },
+        ],
+      }
+    : {};
+
+  const dropdownFilters: Record<string, unknown> = {};
+  if (filters?.project) {
+    dropdownFilters.project = { name: { equals: filters.project, mode: 'insensitive' as const } };
+  }
+  if (filters?.district) {
+    dropdownFilters.district = { name: { equals: filters.district, mode: 'insensitive' as const } };
+  }
+  if (filters?.mode) {
+    dropdownFilters.modeOfImplementation = { name: { equals: filters.mode, mode: 'insensitive' as const } };
+  }
+  if (filters?.status) {
+    dropdownFilters.status = { name: { equals: filters.status, mode: 'insensitive' as const } };
+  }
+
+  const where = {
+    ...(bureauName
+      ? { bureau: { name: { equals: bureauName, mode: 'insensitive' as const } } }
+      : {}),
+    ...(dateRange ? { dateFrom: dateRange } : {}),
+    ...searchFilter,
+    ...dropdownFilters,
+  };
+
+  return prisma.activity.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+    include: {
+      bureau: true,
+      project: true,
+      district: true,
+      municipality: true,
+      requestingAgency: true,
+      modeOfImplementation: true,
+      status: true,
+      targetSectors: { include: { option: true } },
+      responsiblePersons: { include: { option: true } },
+      indicators: true,
+    },
+  });
 }
 
 const PNPKI_TRAINING_INDICATOR =

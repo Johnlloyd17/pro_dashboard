@@ -16,6 +16,7 @@ import { Badge } from './ui/badge';
 import { Checkbox } from './ui/checkbox';
 import { PaginationComponent } from './pagination';
 import AddPropertyRecordDialog from './add-property-record-dialog';
+import EditPropertyRecordDialog from './edit-property-record-dialog';
 import { Search, Pencil, Trash, Import, Download } from 'lucide-react';
 import {
   Select,
@@ -148,6 +149,7 @@ export default function PropertyRecordsTable({
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState(currentSearch);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSearch = () => {
@@ -512,6 +514,7 @@ export default function PropertyRecordsTable({
                         variant='ghost'
                         size='sm'
                         className='h-7 w-7 p-0'
+                        onClick={() => setEditingRecordId(record.id)}
                       >
                         <Pencil className='h-3.5 w-3.5' />
                       </Button>
@@ -622,6 +625,15 @@ export default function PropertyRecordsTable({
           totalPages={totalPages}
         />
       </div>
+      {editingRecordId && (
+        <EditPropertyRecordDialog
+          recordId={editingRecordId}
+          open={!!editingRecordId}
+          onOpenChange={(open) => {
+            if (!open) setEditingRecordId(null);
+          }}
+        />
+      )}
     </div>
   );
 }

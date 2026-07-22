@@ -1,10 +1,21 @@
-import { getPropertyRecords, getPropertyRecordStats, getPropertyRecordFilterOptions } from '@/app/actions/property-actions';
+import {
+  getPropertyRecords,
+  getPropertyRecordStats,
+  getPropertyRecordFilterOptions,
+  getPropertyClassificationBreakdown,
+  getPropertyValueByProject,
+  getPropertyItemsByYear,
+} from '@/app/actions/property-actions';
 import { OverviewStatCards } from '@/components/overview-stat-cards';
 import PropertyRecordsTable from '@/components/property-records-table';
+import { PropertyClassificationChart } from '@/components/property-classification-chart';
+import { PropertyValueByProjectChart } from '@/components/property-value-by-project-chart';
+import { PropertyItemsByYearChart } from '@/components/property-items-by-year-chart';
 import {
   CardDescription,
   CardTitle,
 } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Suspense } from 'react';
 
 export default async function PropertyRecordsPage({
@@ -33,10 +44,20 @@ export default async function PropertyRecordsPage({
     remarks: params.remarks,
   };
 
-  const [stats, { records, totalPages, currentPage }, filterOptions] = await Promise.all([
+  const [
+    stats,
+    { records, totalPages, currentPage },
+    filterOptions,
+    classificationData,
+    projectValueData,
+    yearData,
+  ] = await Promise.all([
     getPropertyRecordStats(),
     getPropertyRecords(page, search || undefined, params.stat, pageSize, filters),
     getPropertyRecordFilterOptions(),
+    getPropertyClassificationBreakdown(),
+    getPropertyValueByProject(),
+    getPropertyItemsByYear(),
   ]);
 
   const metricCards = [
@@ -73,15 +94,30 @@ export default async function PropertyRecordsPage({
       <Suspense>
         <OverviewStatCards topRow={metricCards} bottomRow={[]} />
       </Suspense>
-      <PropertyRecordsTable
-        records={records}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        currentSearch={search}
-        currentPageSize={pageSize}
-        filterOptions={filterOptions}
-        currentFilters={filters}
-      />
+      <Tabs defaultValue='analytics' className='w-full'>
+        <TabsList>
+          <TabsTrigger value='analytics'>Analytics</TabsTrigger>
+          <TabsTrigger value='records'>Records</TabsTrigger>
+        </TabsList>
+        <TabsContent value='analytics' className='flex flex-col gap-4'>
+          <div className='grid grid-cols-2 gap-4'>
+            <PropertyClassificationChart data={classificationData} />
+            <PropertyItemsByYearChart data={yearData} />
+          </div>
+          <PropertyValueByProjectChart data={projectValueData} />
+        </TabsContent>
+        <TabsContent value='records'>
+          <PropertyRecordsTable
+            records={records}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            currentSearch={search}
+            currentPageSize={pageSize}
+            filterOptions={filterOptions}
+            currentFilters={filters}
+          />
+        </TabsContent>
+      </Tabs>
     </main>
   );
 }

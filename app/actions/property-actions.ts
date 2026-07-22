@@ -128,6 +128,10 @@ export async function getPropertyRecords(
   };
 }
 
+export async function getPropertyRecordById(id: string) {
+  return prisma.propertyRecord.findUnique({ where: { id } });
+}
+
 export async function updatePropertyRecord(
   id: string,
   input: AddPropertyRecordInput,
@@ -315,4 +319,51 @@ export async function exportPropertyRecords(
     where,
     orderBy: { createdAt: 'desc' },
   });
+}
+
+export async function getPropertyClassificationBreakdown() {
+  const rows = await prisma.propertyRecord.groupBy({
+    by: ['classification'],
+    _sum: { quantity: true },
+    where: { classification: { not: null } },
+    orderBy: { _sum: { quantity: 'desc' } },
+  });
+
+  return rows.map((r) => ({
+    classification: r.classification ?? 'Unclassified',
+    count: r._sum.quantity ?? 0,
+  }));
+}
+
+export async function getPropertyValueByProject() {
+  const rows = await prisma.propertyRecord.groupBy({
+    by: ['project'],
+    _sum: { unitCost: true },
+    _count: { id: true },
+    where: { project: { not: null } },
+    orderBy: { _sum: { unitCost: 'desc' } },
+  });
+
+  return rows.map((r) => ({
+    project: r.project ?? 'No Project',
+    totalValue: r._sum.unitCost ?? 0,
+    itemCount: r._count.id,
+  }));
+}
+
+export async function getPropertyItemsByYear() {
+  const rows = await prisma.$queryRaw<{ year: string; count: bigint }[]>`
+    SELECT
+      EXTRACT(YEAR FROM "dateAcquired")::text AS year,
+      COUNT(*) AS count
+    FROM "PropertyRecord"
+    WHERE "dateAcquired" IS NOT NULL
+    GROUP BY year
+    ORDER BY year ASC
+  `;
+
+  return rows.map((r) => ({
+    year: r.year,
+    count: Number(r.count),
+  }));
 }

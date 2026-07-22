@@ -33,7 +33,20 @@ export interface TableActionsProps {
 
 export interface DataTableProjectsProps {
   bureauName: string;
-  searchParams?: { page?: string; year?: string; semester?: string; stat?: string };
+  searchParams?: {
+    page?: string;
+    year?: string;
+    semester?: string;
+    stat?: string;
+    sort?: string;
+    project?: string;
+    district?: string;
+    mode?: string;
+    status?: string;
+    month?: string;
+    search?: string;
+    pageSize?: string;
+  };
 }
 
 export interface PaginationComponentProps {
@@ -97,6 +110,26 @@ export interface PropertyRecord {
   unitCost: number;
   estimatedUsefulLife: string | null;
   receivedTransferred: string | null;
+  remarks: string | null;
+  createdAt: Date;
+}
+
+export interface ProcurementRecord {
+  id: string;
+  prNo: string | null;
+  activityId: string | null;
+  activityName: string | null;
+  linkToFile: string | null;
+  projectFundSource: string | null;
+  typeOfItemsProcured: string | null;
+  amount: number;
+  nameOfSupplier: string | null;
+  joPo: string | null;
+  linkToAttachments: string | null;
+  personnelInCharge: string | null;
+  dateForwardedToRo: Date | null;
+  transmittalReport: string | null;
+  paymentStatus: string | null;
   remarks: string | null;
   createdAt: Date;
 }

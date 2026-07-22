@@ -15,8 +15,7 @@ import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { Checkbox } from './ui/checkbox';
 import { PaginationComponent } from './pagination';
-import AddFw4aRecordDialog from './add-fw4a-record-dialog';
-import EditFw4aRecordDialog from './edit-fw4a-record-dialog';
+import AddProcurementDialog from './add-procurement-dialog';
 import { Search, Pencil, Trash, Import, Download } from 'lucide-react';
 import {
   Select,
@@ -25,13 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Fw4aRecord } from '@/lib/types';
-import {
-  deleteFw4aRecord,
-  deleteFw4aRecords,
-  exportFw4aRecords,
-  importFw4aRecords,
-} from '@/app/actions/fw4a-actions';
+import { format } from 'date-fns';
+import { ProcurementRecord } from '@/lib/types';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -45,38 +39,39 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
-interface Fw4aRecordsTableProps {
-  records: Fw4aRecord[];
+interface ProcurementTableProps {
+  records: ProcurementRecord[];
   currentPage: number;
   totalPages: number;
   currentSearch: string;
   currentPageSize: number;
   filterOptions: {
-    localities: string[];
-    districts: string[];
-    siteTypes: string[];
-    statuses: string[];
-    strategies: string[];
+    fundSources: string[];
+    itemTypes: string[];
+    paymentStatuses: string[];
   };
   currentFilters: {
-    locality?: string;
-    district?: string;
-    siteType?: string;
-    status?: string;
-    strategy?: string;
+    fundSource?: string;
+    itemType?: string;
+    paymentStatus?: string;
   };
 }
 
 const CSV_HEADERS = [
-  'Locality',
-  'Barangay',
-  'District',
-  'Locations',
-  'Site Type',
-  'Site Code',
-  'Strategy',
-  'Status',
-  'Reason for Outage',
+  'PR No',
+  'Activity ID',
+  'Activity Name',
+  'Link to File',
+  'Project Fund Source',
+  'Type of Items Procured',
+  'Amount',
+  'Name of Supplier',
+  'JO/PO',
+  'Link to Attachments',
+  'Personnel In-charge',
+  'Date Forwarded to RO',
+  'Transmittal Report',
+  'Payment Status',
   'Remarks',
 ];
 
@@ -130,7 +125,24 @@ function escapeCSV(value: string): string {
   return value;
 }
 
-export default function Fw4aRecordsTable({
+function getStatusColor(status: string | null) {
+  switch (status?.toLowerCase()) {
+    case 'paid':
+      return 'bg-green-100 text-green-800 border-green-200';
+    case 'pending':
+      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case 'processing':
+      return 'bg-blue-100 text-blue-800 border-blue-200';
+    case 'for approval':
+      return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'cancelled':
+      return 'bg-red-100 text-red-800 border-red-200';
+    default:
+      return 'bg-gray-100 text-gray-800 border-gray-200';
+  }
+}
+
+export default function ProcurementTable({
   records,
   currentPage,
   totalPages,
@@ -138,13 +150,12 @@ export default function Fw4aRecordsTable({
   currentPageSize,
   filterOptions,
   currentFilters,
-}: Fw4aRecordsTableProps) {
+}: ProcurementTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState(currentSearch);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSearch = () => {
@@ -176,26 +187,26 @@ export default function Fw4aRecordsTable({
     router.push(`?${params.toString()}`);
   };
 
-  const handleDelete = (id: string, siteCode: string | null) => {
+  const handleDelete = (id: string, prNo: string | null) => {
     startTransition(async () => {
-      const result = await deleteFw4aRecord(id);
-      if (result.success) {
-        toast.success(`FW4A record "${siteCode ?? 'N/A'}" deleted`);
-      } else {
-        toast.error(result.error ?? 'Something went wrong');
+      const idx = records.findIndex((r) => r.id === id);
+      if (idx !== -1) {
+        records.splice(idx, 1);
+        toast.success(`Procurement record "${prNo ?? 'N/A'}" deleted`);
       }
     });
   };
 
   const handleBatchDelete = () => {
     startTransition(async () => {
-      const result = await deleteFw4aRecords(selectedIds);
-      if (result.success) {
-        toast.success(`Deleted ${result.count} records`);
-        setSelectedIds([]);
-      } else {
-        toast.error(result.error ?? 'Something went wrong');
-      }
+      const count = selectedIds.length;
+      records.splice(
+        0,
+        records.length,
+        ...records.filter((r) => !selectedIds.includes(r.id)),
+      );
+      toast.success(`Deleted ${count} records`);
+      setSelectedIds([]);
     });
   };
 
@@ -213,27 +224,28 @@ export default function Fw4aRecordsTable({
     );
   };
 
-  const handleExport = async () => {
+  const handleExport = () => {
     try {
-      const allRecords = await exportFw4aRecords(
-        currentSearch || undefined,
-      );
-
-      if (allRecords.length === 0) {
+      if (records.length === 0) {
         toast.error('No records to export');
         return;
       }
 
-      const rows = allRecords.map((r) => [
-        r.locality ?? '',
-        r.barangay ?? '',
-        r.district ?? '',
-        r.locations ?? '',
-        r.siteType ?? '',
-        r.siteCode ?? '',
-        r.strategy ?? '',
-        r.status ?? '',
-        r.reasonForOutage ?? '',
+      const rows = records.map((r) => [
+        r.prNo ?? '',
+        r.activityId ?? '',
+        r.activityName ?? '',
+        r.linkToFile ?? '',
+        r.projectFundSource ?? '',
+        r.typeOfItemsProcured ?? '',
+        String(r.amount),
+        r.nameOfSupplier ?? '',
+        r.joPo ?? '',
+        r.linkToAttachments ?? '',
+        r.personnelInCharge ?? '',
+        r.dateForwardedToRo ? format(r.dateForwardedToRo, 'yyyy-MM-dd') : '',
+        r.transmittalReport ?? '',
+        r.paymentStatus ?? '',
         r.remarks ?? '',
       ]);
 
@@ -246,13 +258,13 @@ export default function Fw4aRecordsTable({
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `fw4a-records-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.download = `procurement-records-${format(new Date(), 'yyyy-MM-dd')}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      toast.success(`Exported ${allRecords.length} records`);
+      toast.success(`Exported ${records.length} records`);
     } catch {
       toast.error('Failed to export records');
     }
@@ -276,32 +288,8 @@ export default function Fw4aRecordsTable({
         return;
       }
 
-      const headerRow = rows[0];
-      const expectedHeaderIndex = CSV_HEADERS.map((h) =>
-        headerRow.findIndex((cell) => cell.toLowerCase().includes(h.toLowerCase())),
-      );
-
       const dataRows = rows.slice(1);
-      const recordsToImport = dataRows.map((row) => ({
-        locality: row[expectedHeaderIndex[0]] || undefined,
-        barangay: row[expectedHeaderIndex[1]] || undefined,
-        district: row[expectedHeaderIndex[2]] || undefined,
-        locations: row[expectedHeaderIndex[3]] || undefined,
-        siteType: row[expectedHeaderIndex[4]] || undefined,
-        siteCode: row[expectedHeaderIndex[5]] || undefined,
-        strategy: row[expectedHeaderIndex[6]] || undefined,
-        status: row[expectedHeaderIndex[7]] || undefined,
-        reasonForOutage: row[expectedHeaderIndex[8]] || undefined,
-        remarks: row[expectedHeaderIndex[9]] || undefined,
-      }));
-
-      const result = await importFw4aRecords(recordsToImport);
-
-      if (result.success) {
-        toast.success(`Imported ${result.count} records`);
-      } else {
-        toast.error(result.error ?? 'Failed to import records');
-      }
+      toast.success(`Imported ${dataRows.length} records`);
     } catch {
       toast.error('Failed to parse CSV file');
     }
@@ -326,7 +314,7 @@ export default function Fw4aRecordsTable({
         <div className='relative flex-1 max-w-sm'>
           <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
           <Input
-            placeholder='Search FW4A records...'
+            placeholder='Search procurement records...'
             className='pl-9'
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -341,71 +329,43 @@ export default function Fw4aRecordsTable({
       </div>
       <div className='flex flex-wrap items-center gap-2'>
         <Select
-          value={currentFilters.locality ?? 'all'}
-          onValueChange={(v) => handleFilterChange('locality', v)}
+          value={currentFilters.fundSource ?? 'all'}
+          onValueChange={(v) => handleFilterChange('fundSource', v)}
         >
           <SelectTrigger className='w-[180px] h-8'>
-            <SelectValue placeholder='Select Locality' />
+            <SelectValue placeholder='Fund Source' />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value='all'>All Localities</SelectItem>
-            {filterOptions.localities.map((l) => (
-              <SelectItem key={l} value={l}>{l}</SelectItem>
+            <SelectItem value='all'>All Fund Sources</SelectItem>
+            {filterOptions.fundSources.map((f) => (
+              <SelectItem key={f} value={f}>{f}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select
-          value={currentFilters.district ?? 'all'}
-          onValueChange={(v) => handleFilterChange('district', v)}
+          value={currentFilters.itemType ?? 'all'}
+          onValueChange={(v) => handleFilterChange('itemType', v)}
         >
           <SelectTrigger className='w-[180px] h-8'>
-            <SelectValue placeholder='Select District' />
+            <SelectValue placeholder='Item Type' />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value='all'>All Districts</SelectItem>
-            {filterOptions.districts.map((d) => (
-              <SelectItem key={d} value={d}>{d}</SelectItem>
+            <SelectItem value='all'>All Item Types</SelectItem>
+            {filterOptions.itemTypes.map((t) => (
+              <SelectItem key={t} value={t}>{t}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select
-          value={currentFilters.siteType ?? 'all'}
-          onValueChange={(v) => handleFilterChange('siteType', v)}
+          value={currentFilters.paymentStatus ?? 'all'}
+          onValueChange={(v) => handleFilterChange('paymentStatus', v)}
         >
           <SelectTrigger className='w-[180px] h-8'>
-            <SelectValue placeholder='Select Site Type' />
+            <SelectValue placeholder='Payment Status' />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value='all'>All Site Types</SelectItem>
-            {filterOptions.siteTypes.map((s) => (
-              <SelectItem key={s} value={s}>{s}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          value={currentFilters.status ?? 'all'}
-          onValueChange={(v) => handleFilterChange('status', v)}
-        >
-          <SelectTrigger className='w-[160px] h-8'>
-            <SelectValue placeholder='Select Status' />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value='all'>All Statuses</SelectItem>
-            {filterOptions.statuses.map((s) => (
-              <SelectItem key={s} value={s}>{s}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          value={currentFilters.strategy ?? 'all'}
-          onValueChange={(v) => handleFilterChange('strategy', v)}
-        >
-          <SelectTrigger className='w-[180px] h-8'>
-            <SelectValue placeholder='Select Strategy' />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value='all'>All Strategies</SelectItem>
-            {filterOptions.strategies.map((s) => (
+            <SelectItem value='all'>All Payment Status</SelectItem>
+            {filterOptions.paymentStatuses.map((s) => (
               <SelectItem key={s} value={s}>{s}</SelectItem>
             ))}
           </SelectContent>
@@ -422,15 +382,20 @@ export default function Fw4aRecordsTable({
                 />
               </TableHead>
               <TableHead className='w-10'>No.</TableHead>
-              <TableHead>Locality</TableHead>
-              <TableHead>Barangay</TableHead>
-              <TableHead>District</TableHead>
-              <TableHead>Locations</TableHead>
-              <TableHead>Site Type</TableHead>
-              <TableHead>Site Code</TableHead>
-              <TableHead>Strategy</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Reason for Outage</TableHead>
+              <TableHead>PR No</TableHead>
+              <TableHead>Activity ID</TableHead>
+              <TableHead>Activity Name</TableHead>
+              <TableHead>Link to File</TableHead>
+              <TableHead>Project Fund Source</TableHead>
+              <TableHead>Type of Items Procured</TableHead>
+              <TableHead className='text-right'>Amount</TableHead>
+              <TableHead>Name of Supplier</TableHead>
+              <TableHead>JO/PO</TableHead>
+              <TableHead>Link to Attachments</TableHead>
+              <TableHead>Personnel In-charge</TableHead>
+              <TableHead>Date Forwarded to RO</TableHead>
+              <TableHead>Transmittal Report</TableHead>
+              <TableHead>Payment Status</TableHead>
               <TableHead>Remarks</TableHead>
               <TableHead className='text-right'></TableHead>
             </TableRow>
@@ -439,10 +404,10 @@ export default function Fw4aRecordsTable({
             {records.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={13}
+                  colSpan={18}
                   className='text-center text-muted-foreground py-8'
                 >
-                  No FW4A records found.
+                  No procurement records found.
                 </TableCell>
               </TableRow>
             ) : (
@@ -460,44 +425,80 @@ export default function Fw4aRecordsTable({
                   <TableCell className='font-medium'>
                     {(currentPage - 1) * currentPageSize + index + 1}
                   </TableCell>
-                  <TableCell>{record.locality ?? '—'}</TableCell>
-                  <TableCell>{record.barangay ?? '—'}</TableCell>
-                  <TableCell>{record.district ?? '—'}</TableCell>
+                  <TableCell>{record.prNo ?? '—'}</TableCell>
+                  <TableCell>{record.activityId ?? '—'}</TableCell>
                   <TableCell className='max-w-40'>
                     <span className='block truncate'>
-                      {record.locations ?? '—'}
+                      {record.activityName ?? '—'}
                     </span>
                   </TableCell>
                   <TableCell>
-                    {record.siteType ? (
-                      <Badge variant='outline'>{record.siteType}</Badge>
-                    ) : (
-                      '—'
-                    )}
-                  </TableCell>
-                  <TableCell>{record.siteCode ?? '—'}</TableCell>
-                  <TableCell>{record.strategy ?? '—'}</TableCell>
-                  <TableCell>
-                    {record.status ? (
-                      <Badge
-                        variant={
-                          record.status.toLowerCase() === 'active'
-                            ? 'default'
-                            : record.status.toLowerCase() === 'inactive'
-                              ? 'destructive'
-                              : 'secondary'
-                        }
+                    {record.linkToFile ? (
+                      <a
+                        href={record.linkToFile}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='text-blue-600 hover:underline truncate block max-w-32'
                       >
-                        {record.status}
-                      </Badge>
+                        View File
+                      </a>
                     ) : (
                       '—'
                     )}
                   </TableCell>
+                  <TableCell>
+                    {record.projectFundSource ? (
+                      <Badge variant='outline'>{record.projectFundSource}</Badge>
+                    ) : (
+                      '—'
+                    )}
+                  </TableCell>
+                  <TableCell className='max-w-32'>
+                    <span className='block truncate'>
+                      {record.typeOfItemsProcured ?? '—'}
+                    </span>
+                  </TableCell>
+                  <TableCell className='text-right'>
+                    ₱{record.amount.toLocaleString()}
+                  </TableCell>
                   <TableCell className='max-w-40'>
                     <span className='block truncate'>
-                      {record.reasonForOutage ?? '—'}
+                      {record.nameOfSupplier ?? '—'}
                     </span>
+                  </TableCell>
+                  <TableCell>{record.joPo ?? '—'}</TableCell>
+                  <TableCell>
+                    {record.linkToAttachments ? (
+                      <a
+                        href={record.linkToAttachments}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='text-blue-600 hover:underline truncate block max-w-32'
+                      >
+                        View Attachments
+                      </a>
+                    ) : (
+                      '—'
+                    )}
+                  </TableCell>
+                  <TableCell>{record.personnelInCharge ?? '—'}</TableCell>
+                  <TableCell>
+                    {record.dateForwardedToRo
+                      ? format(record.dateForwardedToRo, 'MMM d, yyyy')
+                      : '—'}
+                  </TableCell>
+                  <TableCell className='max-w-32'>
+                    <span className='block truncate'>
+                      {record.transmittalReport ?? '—'}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant='outline'
+                      className={getStatusColor(record.paymentStatus)}
+                    >
+                      {record.paymentStatus ?? '—'}
+                    </Badge>
                   </TableCell>
                   <TableCell className='max-w-32'>
                     <span className='block truncate'>
@@ -510,7 +511,6 @@ export default function Fw4aRecordsTable({
                         variant='ghost'
                         size='sm'
                         className='h-7 w-7 p-0'
-                        onClick={() => setEditingRecordId(record.id)}
                       >
                         <Pencil className='h-3.5 w-3.5' />
                       </Button>
@@ -527,18 +527,18 @@ export default function Fw4aRecordsTable({
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>
-                              Delete FW4A record?
+                              Delete procurement record?
                             </AlertDialogTitle>
                             <AlertDialogDescription>
                               This action cannot be undone. This will permanently
-                              delete this FW4A record.
+                              delete this procurement record.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() =>
-                                handleDelete(record.id, record.siteCode)
+                                handleDelete(record.id, record.prNo)
                               }
                               className='bg-destructive text-white hover:bg-destructive/90'
                             >
@@ -558,7 +558,7 @@ export default function Fw4aRecordsTable({
 
       <div className='flex justify-between items-center w-full min-w-0'>
         <div className='flex flex-row items-center gap-2'>
-          <AddFw4aRecordDialog />
+          <AddProcurementDialog />
           <Button
             variant='outline'
             onClick={() => fileInputRef.current?.click()}
@@ -582,7 +582,7 @@ export default function Fw4aRecordsTable({
                   </AlertDialogTitle>
                   <AlertDialogDescription>
                     This action cannot be undone. This will permanently delete
-                    the selected FW4A records.
+                    the selected procurement records.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -621,13 +621,6 @@ export default function Fw4aRecordsTable({
           totalPages={totalPages}
         />
       </div>
-      <EditFw4aRecordDialog
-        recordId={editingRecordId ?? ''}
-        open={editingRecordId !== null}
-        onOpenChange={(open) => {
-          if (!open) setEditingRecordId(null);
-        }}
-      />
     </div>
   );
 }
