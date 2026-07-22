@@ -117,9 +117,9 @@ export function EditTargetDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className='sm:max-w-2xl'>
         {loading ? (
-          <div className="py-12 text-center text-sm text-muted-foreground">
+          <div className='py-12 text-center text-sm text-muted-foreground'>
             Loading...
           </div>
         ) : (
@@ -129,22 +129,22 @@ export function EditTargetDialog({
               <DialogDescription>Update the details below.</DialogDescription>
             </DialogHeader>
 
-            <div className="flex flex-col gap-3 py-4">
+            <div className='flex flex-col gap-3 py-4'>
               <Field>
-                <Label htmlFor="edit-target-name">Indicator</Label>
+                <Label htmlFor='edit-target-name'>Indicator</Label>
                 <Input
-                  id="edit-target-name"
+                  id='edit-target-name'
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
               </Field>
 
-              <div className="grid grid-cols-7 gap-2 items-end">
+              <div className='grid grid-cols-4 gap-2 items-end'>
                 <Field>
-                  <Label htmlFor="edit-target-1st">1st District</Label>
+                  <Label htmlFor='edit-target-1st'>1st District</Label>
                   <Input
-                    id="edit-target-1st"
-                    type="number"
+                    id='edit-target-1st'
+                    type='number'
                     value={
                       measurementType === 'percentage'
                         ? '100'
@@ -156,10 +156,10 @@ export function EditTargetDialog({
                 </Field>
 
                 <Field>
-                  <Label htmlFor="edit-target-2nd">2nd District</Label>
+                  <Label htmlFor='edit-target-2nd'>2nd District</Label>
                   <Input
-                    id="edit-target-2nd"
-                    type="number"
+                    id='edit-target-2nd'
+                    type='number'
                     value={
                       measurementType === 'percentage'
                         ? '100'
@@ -171,23 +171,23 @@ export function EditTargetDialog({
                 </Field>
 
                 <Field>
-                  <Label htmlFor="edit-target-semester">Semester</Label>
+                  <Label htmlFor='edit-target-semester'>Semester</Label>
                   <Select value={semester} onValueChange={setSemester}>
-                    <SelectTrigger id="edit-target-semester">
-                      <SelectValue placeholder="Select" />
+                    <SelectTrigger id='edit-target-semester'>
+                      <SelectValue placeholder='Select' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1st">1st Semester</SelectItem>
-                      <SelectItem value="2nd">2nd Semester</SelectItem>
+                      <SelectItem value='1st'>1st Semester</SelectItem>
+                      <SelectItem value='2nd'>2nd Semester</SelectItem>
                     </SelectContent>
                   </Select>
                 </Field>
 
                 <Field>
-                  <Label htmlFor="edit-target-year">Year</Label>
+                  <Label htmlFor='edit-target-year'>Year</Label>
                   <Select value={year} onValueChange={setYear}>
-                    <SelectTrigger id="edit-target-year">
-                      <SelectValue placeholder="Select" />
+                    <SelectTrigger id='edit-target-year'>
+                      <SelectValue placeholder='Select' />
                     </SelectTrigger>
                     <SelectContent>
                       {YEAR_OPTIONS.map((y) => (
@@ -200,20 +200,18 @@ export function EditTargetDialog({
                 </Field>
 
                 <Field>
-                  <Label htmlFor="edit-target-measurement">Measured By</Label>
+                  <Label htmlFor='edit-target-measurement'>Measured By</Label>
                   <Select
                     value={measurementType}
                     onValueChange={setMeasurementType}
                   >
-                    <SelectTrigger id="edit-target-measurement">
-                      <SelectValue placeholder="Select" />
+                    <SelectTrigger id='edit-target-measurement'>
+                      <SelectValue placeholder='Select' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="activities">Activities</SelectItem>
-                      <SelectItem value="participants">
-                        Participants
-                      </SelectItem>
-                      <SelectItem value="percentage">
+                      <SelectItem value='activities'>Activities</SelectItem>
+                      <SelectItem value='participants'>Participants</SelectItem>
+                      <SelectItem value='percentage'>
                         Percentage (100%)
                       </SelectItem>
                     </SelectContent>
@@ -221,17 +219,17 @@ export function EditTargetDialog({
                 </Field>
 
                 <Field>
-                  <Label htmlFor="edit-target-bureau">Bureau</Label>
+                  <Label htmlFor='edit-target-bureau'>Bureau</Label>
                   <Select
                     value={bureauOptionId}
                     onValueChange={setBureauOptionId}
                   >
-                    <SelectTrigger id="edit-target-bureau">
-                      <SelectValue placeholder="Select" />
+                    <SelectTrigger id='edit-target-bureau'>
+                      <SelectValue placeholder='Select' />
                     </SelectTrigger>
                     <SelectContent>
                       {bureauOptions.length === 0 ? (
-                        <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                        <div className='px-2 py-1.5 text-sm text-muted-foreground'>
                           No bureaus available
                         </div>
                       ) : (
@@ -246,13 +244,13 @@ export function EditTargetDialog({
                 </Field>
 
                 <Field>
-                  <Label htmlFor="edit-target-project">Project</Label>
+                  <Label htmlFor='edit-target-project'>Project</Label>
                   <Select
                     value={project.selectedId}
                     onValueChange={project.setSelectedId}
                     disabled={!bureauOptionId}
                   >
-                    <SelectTrigger id="edit-target-project">
+                    <SelectTrigger id='edit-target-project'>
                       <SelectValue
                         placeholder={
                           bureauOptionId ? 'Select' : 'Select bureau first'
@@ -261,7 +259,7 @@ export function EditTargetDialog({
                     </SelectTrigger>
                     <SelectContent>
                       {project.options.length === 0 ? (
-                        <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                        <div className='px-2 py-1.5 text-sm text-muted-foreground'>
                           No related projects
                         </div>
                       ) : (
@@ -279,13 +277,13 @@ export function EditTargetDialog({
 
             <DialogFooter>
               <Button
-                type="button"
-                variant="outline"
+                type='button'
+                variant='outline'
                 onClick={() => onOpenChange(false)}
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isPending}>
+              <Button type='submit' disabled={isPending}>
                 {isPending ? 'Saving...' : 'Save changes'}
               </Button>
             </DialogFooter>

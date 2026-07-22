@@ -2,9 +2,8 @@ import {
   getActivitiesForCalendar,
   getActivityStats,
   getCompletedActivitiesByMunicipality,
-  getCybersecurityHighlights,
   getGenderDemographics,
-  getLguPenetrationRate,
+  getIlcdbHighlights,
   getModeOfImplementationBreakdown,
   getTargetAccomplishments,
 } from "@/app/actions/activity-actions";
@@ -17,10 +16,7 @@ import { DataTableProjects } from "@/components/data-table-projects";
 import FilterTerm from "@/components/filter-term";
 import { getCurrentTerm } from "@/lib/term";
 import { TargetAnalyticsGrid } from "@/components/target-analytics-grid";
-import { TargetChartCard } from "@/components/target-chart-card";
-import { TargetVsAccomplishmentDistrictChart } from "@/components/target-vs-accomplishment";
 import { TargetsDialog } from "@/components/targets-dialog";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -45,22 +41,10 @@ export default async function ILCDBPage({
   const currentTerm = getCurrentTerm();
   const filterYear = params.year ?? String(currentTerm.year);
   const filterSemester = params.semester ?? currentTerm.semester;
-  const stats = await getActivityStats(
-    "Cybersecurity",
-    filterYear,
-    filterSemester,
-  );
-  const lguPenetration = await getLguPenetrationRate(
-    "Cybersecurity",
-    filterYear,
-    filterSemester,
-  );
-  const highlights = await getCybersecurityHighlights(
-    filterYear,
-    filterSemester,
-  );
+  const stats = await getActivityStats("ILCDB", filterYear, filterSemester);
+  const highlights = await getIlcdbHighlights(filterYear, filterSemester);
 
-  const cybersecurityData = [
+  const ilcdbData = [
     {
       id: "completed-activities",
       title: "Completed Activities",
@@ -74,86 +58,87 @@ export default async function ILCDBPage({
       description: "Activities scheduled ahead.",
     },
     {
-      id: "total-participants",
-      title: "Total Participants",
-      value: stats.totalParticipants,
-      description: "Participants reached so far.",
+      id: "center-users-served",
+      title: "Tech4ED Center Users Served",
+      value: highlights.centerUsersServed,
+      description: "Users served across the digital transformation centers.",
     },
     {
-      id: "lgu-penetration-rate",
-      title: "LGU Penetration Rate",
-      value: `${lguPenetration.rate}%`,
-      description: `${lguPenetration.reached} of ${lguPenetration.total} SDN LGUs reached with activities.`,
+      id: "skills-gap-surveys",
+      title: "ICT Skills Gap Analysis Surveys",
+      value: highlights.skillsGapSurveys,
+      description: "Surveys conducted under EPMD.",
     },
     {
-      id: "ciesmd-completed",
-      title: "Cybersecurity Awareness Campaigns",
-      value: highlights.ciesmdCompleted,
-      description: "Completed activities under the CIESMD project.",
+      id: "dlt-conducted",
+      title: "Digital Literacy Trainings Conducted",
+      value: highlights.dltConducted,
+      description:
+        "Digital literacy trainings and advocacy programs at Tech4ED centers.",
     },
     {
-      id: "pnpki-trainings",
-      title: "PNPKI User's Trainings Conducted",
-      value: highlights.trainingsConducted,
-      description: "Trainings upon request or with partner stakeholders.",
+      id: "dwia-trainings",
+      title: "DWIA Trainings Conducted",
+      value: highlights.dwiaTrainings,
+      description: "Digital workforce trainings under TMD.",
     },
     {
-      id: "pnpki-awareness",
-      title: "PNPKI Awareness Campaigns",
-      value: highlights.awarenessCampaigns,
-      description: "Government entities reached with PNPKI awareness.",
+      id: "certification-exams",
+      title: "Certification Exams Conducted",
+      value: highlights.certificationExams,
+      description: "Competency-based examinations under C3D2.",
     },
     {
-      id: "digital-certificates",
-      title: "Digital Certificates Issued",
-      value: highlights.certificatesIssued,
-      description: "Participants issued with Digital Certificates.",
+      id: "individuals-trained",
+      title: "SPARK Individuals Trained",
+      value: highlights.individualsTrained,
+      description: "Trained through SPARK technical trainings.",
     },
   ];
 
   const municipalityData = await getCompletedActivitiesByMunicipality(
-    "Cybersecurity",
+    "ILCDB",
     filterYear,
     filterSemester,
     params.project,
   );
   const genderData = await getGenderDemographics(
-    "Cybersecurity",
+    "ILCDB",
     filterYear,
     filterSemester,
     params.project,
   );
   const modeData = await getModeOfImplementationBreakdown(
-    "Cybersecurity",
+    "ILCDB",
     filterYear,
     filterSemester,
     params.project,
   );
   const targetData = await getTargetAccomplishments(
-    "Cybersecurity",
+    "ILCDB",
     filterYear,
     filterSemester,
   );
-  const calendarData = await getActivitiesForCalendar("Cybersecurity");
+  const calendarData = await getActivitiesForCalendar("ILCDB");
 
   return (
     <main className="flex flex-col gap-4">
       <div className="flex flex-row justify-between items-end">
         <div>
-          <CardTitle className="text-xl">Cybersecurity Bureau</CardTitle>
+          <CardTitle className="text-xl">ILCDB Bureau</CardTitle>
           <CardDescription>
-            Monitor your organization's cybersecurity performance and
-            compliance.
+            Monitor digital literacy, inclusion, and capability-building
+            programs across the province.
           </CardDescription>
         </div>
         <div className="flex flex-row gap-2">
-          <ViewTargets bureauName="Cybersecurity" />
+          <ViewTargets bureauName="ILCDB" />
           <TargetsDialog />
           <FilterTerm />
         </div>
       </div>
       <div className="grid grid-cols-4 gap-4">
-        {cybersecurityData.map((item) => (
+        {ilcdbData.map((item) => (
           <Card key={item.id} className="col-span-1">
             <CardHeader>
               <CardTitle>{item.title}</CardTitle>
